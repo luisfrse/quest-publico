@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quest · Guía para profesores</title>
+  <link rel="stylesheet" href="/quest.css">
+  <style>@media print { html, body { background: #fff !important; } }</style>
+</head>
+<body>
+<main class="ayuda">
+  <div class="logo" style="font-size:1.4rem">Quest</div>
+  <h1>Guía rápida para profesores</h1>
+  <p>Quest es una aplicación de cuestionarios en tiempo real, al estilo de Kahoot: tú proyectas las preguntas en clase y los alumnos responden desde el móvil tocando uno de cuatro botones de colores.</p>
+
+  <div class="barra-descarga">
+    <a class="btn" href="/Guia-Quest.pdf" download>Descargar esta guía (PDF)</a>
+    <a class="btn secundario" href="/plantillas/Plantilla-Quest.xlsx" download>Plantilla Excel</a>
+    <a class="btn secundario" href="/plantillas/Plantilla-Quest.csv" download>Plantilla CSV</a>
+    <a class="btn secundario" href="/profesor">Entrar como profesor</a>
+  </div>
+
+  <h2>1. Antes de empezar</h2>
+  <ul>
+    <li>Necesitas un <strong>código de invitación</strong> personal. Te lo facilita el administrador.</li>
+    <li>¿No tienes código? Si quieres usar Quest gratis, pídelo desde el <a id="enlace-contacto" href="https://luisfs.com">apartado de contacto de la web</a>.</li>
+    <li>Tus alumnos <strong>no necesitan código ni cuenta</strong>: entran con el PIN de cada partida.</li>
+  </ul>
+
+  <h2>2. Preparar un cuestionario</h2>
+  <p>Descarga la plantilla (Excel o CSV) y escribe <strong>una pregunta por fila</strong>. La primera fila (cabecera) debe conservarse tal cual:</p>
+  <table>
+    <thead><tr><th>Columna</th><th>Qué poner</th></tr></thead>
+    <tbody>
+      <tr><td><code>numero</code></td><td>Orden de la pregunta (1, 2, 3…). Las preguntas se ordenan por este número.</td></tr>
+      <tr><td><code>tiempo</code></td><td>Segundos para responder, entre 3 y 600. Si lo dejas vacío, 20 segundos.</td></tr>
+      <tr><td><code>pregunta</code></td><td>El enunciado que se proyecta en clase (máximo 500 caracteres).</td></tr>
+      <tr><td><code>correcta</code></td><td>La respuesta correcta (máximo 300 caracteres). Escríbela solo aquí.</td></tr>
+      <tr><td><code>incorrecta1</code></td><td>Una respuesta incorrecta (obligatoria).</td></tr>
+      <tr><td><code>incorrecta2</code>, <code>incorrecta3</code></td><td>Más respuestas incorrectas (opcionales). Con menos de tres, la pregunta tiene 2 o 3 opciones.</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>Quest <strong>mezcla las respuestas</strong> al crear cada partida: no hace falta que la correcta vaya en una posición concreta.</li>
+    <li>Un cuestionario puede tener hasta <strong><span data-lim="preguntas">100</span> preguntas</strong>.</li>
+    <li>Las filas que solo tienen el número (sin pregunta) se ignoran. Las incompletas se omiten y la vista previa te avisa.</li>
+    <li><strong>El nombre del archivo es el título del cuestionario.</strong> Si lo nombras <code>ASIGNATURA_Tema</code> (por ejemplo <code>C6_U1_Instrumental</code>), Quest lo agrupa en una carpeta con el nombre de la asignatura.</li>
+  </ul>
+
+  <h2>3. Importar el cuestionario</h2>
+  <ol>
+    <li>Entra en la dirección de Quest seguida de <code>/profesor</code> e introduce tu código.</li>
+    <li>Pulsa <strong>Importar cuestionario</strong> (o arrastra el archivo a la pantalla). Se admiten archivos <code>.xlsx</code> y <code>.csv</code>.</li>
+    <li>Revisa la vista previa, ajusta el nombre si quieres y pulsa <strong>Guardar en mi biblioteca</strong>.</li>
+  </ol>
+  <p>Si ya tenías un cuestionario con el mismo nombre, el nuevo lo sustituye. Puedes cambiar el nombre (✎) o eliminar un cuestionario (🗑) desde la lista.</p>
+
+  <h2>4. Jugar</h2>
+  <ol>
+    <li>Elige el cuestionario y pulsa <strong>Crear partida</strong>. Proyecta la pantalla: aparecen un <strong>PIN</strong> y un <strong>código QR</strong>.</li>
+    <li>Los alumnos abren la web de Quest en el móvil (o escanean el QR) y escriben el PIN, su nombre y su clase.</li>
+    <li>Cuando estén todos dentro, pulsa <strong>Empezar</strong>.</li>
+    <li>En cada pregunta corre el tiempo. La respuesta correcta se muestra al acabar el tiempo, cuando han respondido todos, o cuando pulses <strong>Mostrar respuesta</strong>. Después, <strong>Siguiente</strong> (también valen la barra espaciadora y la flecha →).</li>
+    <li>El ranking aparece en un lateral de la pantalla y se actualiza al mostrar cada respuesta.</li>
+  </ol>
+  <div class="destacado">
+    <strong>Puntuación.</strong> Cada acierto vale 1 punto; fallar o no responder vale 0. La rapidez no da puntos extra: el tiempo de respuesta de los aciertos solo se suma para <strong>desempatar</strong> (queda por delante quien tarda menos).
+  </div>
+  <ul>
+    <li>Si un alumno pierde la conexión, puede volver a entrar con el mismo PIN, nombre y clase y conserva sus puntos.</li>
+    <li>El botón <strong>Terminar</strong> cierra la partida; cuentan solo las preguntas cuya respuesta ya se ha mostrado.</li>
+    <li>Límites: hasta <strong><span data-lim="jugadores">60</span> alumnos</strong> por partida.</li>
+  </ul>
+
+  <h2>5. Resultados</h2>
+  <p>Al terminar, pulsa <strong>Descargar notas (CSV)</strong>. El archivo trae fecha, nombre, clase, cuestionario, fallos, puntuación total y tiempo total, y se abre directamente en Excel o Google Sheets. Con <strong>Descargar detalle (CSV)</strong> obtienes además la respuesta de cada alumno a cada pregunta.</p>
+  <div class="destacado">
+    <strong>Importante: el servidor no guarda los resultados.</strong> Descárgalos al terminar. También quedan en el <strong>Historial</strong> de tu navegador (las últimas 60 partidas), desde donde puedes volver a descargarlos.
+  </div>
+  <p>Si recargas la página con una partida en marcha, puedes volver a ella. Una partida se pierde si el servidor se reinicia o si pasan varias horas sin actividad.</p>
+
+  <h2>6. Copia de seguridad</h2>
+  <p>Tus cuestionarios y tu historial se guardan <strong>solo en tu navegador</strong>. Si borras los datos del navegador, cambias de ordenador o navegas en una ventana privada, no los verás.</p>
+  <ul>
+    <li>Usa <strong>Copia de seguridad → Exportar copia (.json)</strong> de vez en cuando y guarda el archivo.</li>
+    <li>Para recuperarla (o llevártela a otro ordenador): <strong>Copia de seguridad → Importar copia…</strong></li>
+    <li>Conserva siempre tus archivos originales de Excel o CSV: son tu mejor copia.</li>
+  </ul>
+
+  <h2>7. Privacidad</h2>
+  <ul>
+    <li>Las preguntas se envían al servidor solo al crear una partida, se guardan <strong>únicamente en memoria</strong> y se descartan al cerrarla.</li>
+    <li>Los nombres y clases de los alumnos solo existen en memoria mientras dura la partida. No se guardan en el servidor.</li>
+    <li>Lo único que conserva el servidor es tu código de invitación, cuántas partidas has creado y la fecha de tu último uso.</li>
+  </ul>
+
+  <h2>8. Problemas frecuentes</h2>
+  <ul>
+    <li><strong>«Código no válido, revocado o caducado»:</strong> revisa que lo hayas escrito bien. Tras varios intentos fallidos se bloquea el acceso unos minutos.</li>
+    <li><strong>No veo mis cuestionarios:</strong> comprueba que usas el mismo navegador y no una ventana privada, o importa tu copia de seguridad.</li>
+    <li><strong>Un alumno no puede entrar:</strong> el PIN cambia en cada partida; comprueba que escribe el actual y que la partida no ha terminado.</li>
+    <li><strong>«Ya tienes N partidas abiertas»:</strong> hay un máximo de <span data-lim="partidasPorCodigo">3</span> partidas simultáneas por código. Cierra alguna.</li>
+  </ul>
+
+  <script src="/js/ayuda.js"></script>
+</main>
+</body>
+</html>

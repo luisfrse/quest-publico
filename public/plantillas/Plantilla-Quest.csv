@@ -1,0 +1,3 @@
+﻿numero;tiempo;pregunta;correcta;incorrecta1;incorrecta2;incorrecta3
+1;20;Ejemplo: ¿Cuál es la capital de Francia?;París;Madrid;Roma;Berlín
+2;15;Ejemplo: ¿Cuánto es 7 × 8?;56;54;63;48

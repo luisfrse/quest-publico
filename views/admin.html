@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quest · Códigos de invitación</title>
+  <link rel="stylesheet" href="/quest.css">
+</head>
+<body class="admin">
+  <div class="contenedor">
+    <div class="cab">
+      <h1><span class="logo">Quest</span> · Códigos de invitación</h1>
+      <span class="estado-servidor" id="estado-servidor"></span>
+    </div>
+
+    <div class="filtros">
+      <label class="campo"><span>Persona</span><input id="in-etiqueta" maxlength="60" placeholder="Ej.: Ana López (IES Mataró)" autocomplete="off"></label>
+      <label class="campo"><span>Caduca (opcional)</span><input type="date" id="in-caduca"></label>
+      <button class="btn" id="btn-crear" type="button">Crear código</button>
+    </div>
+    <p class="error" id="error" hidden></p>
+
+    <div id="nuevo"></div>
+    <div id="tabla" class="tabla-scroll"></div>
+  </div>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+﻿numero;tiempo;pregunta;correcta;incorrecta1;incorrecta2;incorrecta3
+1;5;¿Cuál es el órgano más grande?;Piel;Hígado;Pulmón;Cerebro
+2;5;¿2+2?;4;3;5;
+3;;"=SUMA(1;1) pregunta con fórmula";Sí;No;;
+4;5;Incompleta;;a;;

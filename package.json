@@ -1,0 +1,25 @@
+{
+  "name": "quest-publico",
+  "version": "1.0.0",
+  "description": "Quest: cuestionarios en tiempo real para clase",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/servidor.js && node test/navegador.js",
+    "test:servidor": "node test/servidor.js",
+    "test:navegador": "node test/navegador.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "express": "^5.3.0",
+    "fflate": "^0.8.3",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.4"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.4"
+  }
+}

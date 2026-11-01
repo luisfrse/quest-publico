@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quest · Profesor</title>
+  <link rel="stylesheet" href="/quest.css">
+</head>
+<body class="profesor">
+
+  <header class="cabecera">
+    <span class="logo">Quest</span>
+    <span class="titulo" id="cab-titulo"></span>
+    <span class="cab-derecha">
+      <span class="sesion-mini" id="cab-sesion" hidden></span>
+      <span class="pin-mini" id="cab-pin" hidden></span>
+    </span>
+  </header>
+
+  <div class="pagina">
+    <main class="principal" id="principal"></main>
+    <aside class="lateral" id="lateral" hidden>
+      <h2 id="lat-titulo">Ranking</h2>
+      <ol class="ranking" id="ranking"></ol>
+    </aside>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/vendor/fflate.js"></script>
+  <script type="module" src="/js/profesor.js"></script>
+</body>
+</html>
