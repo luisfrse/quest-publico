@@ -1,28 +1,30 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="ca">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quest · Códigos de invitación</title>
+  <title data-i18n-doc="ac.doc">Quest · Codis d'invitació</title>
   <link rel="stylesheet" href="/quest.css">
 </head>
 <body class="admin">
   <div class="contenedor">
     <div class="cab">
-      <h1><span class="logo">Quest</span> · Códigos de invitación</h1>
+      <h1><span class="logo">Quest</span> · <span data-i18n="ac.titulo"></span></h1>
+      <span class="cab-idioma" data-lang-slot></span>
       <span class="estado-servidor" id="estado-servidor"></span>
     </div>
 
     <div class="filtros">
-      <label class="campo"><span>Persona</span><input id="in-etiqueta" maxlength="60" placeholder="Ej.: Ana López (IES Mataró)" autocomplete="off"></label>
-      <label class="campo"><span>Caduca (opcional)</span><input type="date" id="in-caduca"></label>
-      <button class="btn" id="btn-crear" type="button">Crear código</button>
+      <label class="campo"><span data-i18n="ac.persona"></span><input id="in-etiqueta" maxlength="60" data-i18n-ph="ac.persona_ph" autocomplete="off"></label>
+      <label class="campo"><span data-i18n="ac.caduca_opc"></span><input type="date" id="in-caduca"></label>
+      <button class="btn" id="btn-crear" type="button" data-i18n="ac.crear"></button>
     </div>
     <p class="error" id="error" hidden></p>
 
     <div id="nuevo"></div>
     <div id="tabla" class="tabla-scroll"></div>
   </div>
+  <script src="/i18n.js"></script>
   <script src="/js/admin.js"></script>
 </body>
 </html>

@@ -18,13 +18,13 @@
       if (id !== 'v-pregunta' && animacion) { cancelAnimationFrame(animacion); animacion = null; }
     }
 
-    function error(msg) {
+    // Los errores llegan del servidor como código y se traducen aquí (se vuelven a traducir si cambia el idioma)
+    function error(codigo, vars) {
       const e = $('error');
-      e.textContent = msg || '';
-      e.hidden = !msg;
+      if (!codigo) { e.textContent = ''; e.hidden = true; return; }
+      I18N.setT(e, I18N.has('e.' + codigo) ? 'e.' + codigo : 'e.generico', vars);
+      e.hidden = false;
     }
-
-    function ordinal(n) { return n + 'º'; }
 
     // --- Formulario de entrada
     const prev = datosForm();
@@ -38,7 +38,7 @@
         $('btn-entrar').disabled = false;
         if (!res || !res.ok) {
           if (silencioso) { olvidar(); mostrar('v-entrada'); return; }
-          return error((res && res.error) || 'No se pudo entrar');
+          return error((res && res.error) || 'no_entrar', res && res.vars);
         }
         error('');
         sesion = { pin: res.pin, id: res.id, nombre: res.nombre, clase: res.clase };
@@ -70,7 +70,7 @@
     // --- Estados
     socket.on('alumno:estado', (e) => {
       if (e.fase === 'lobby') {
-        $('lobby-nombre').textContent = e.nombre;
+        I18N.setT($('lobby-msg'), 'a.dentro', { n: e.nombre });
         mostrar('v-lobby');
       } else if (e.fase === 'pregunta') {
         if (e.respondida !== null && e.respondida !== undefined) {
@@ -82,18 +82,18 @@
       } else if (e.fase === 'revelada') {
         pintarResultado(e);
       } else if (e.fase === 'final') {
-        $('f-pos').textContent = e.pos ? 'Has quedado ' + ordinal(e.pos) + ' de ' + e.jugadores : '';
-        $('f-pts').textContent = e.puntos + (e.puntos === 1 ? ' acierto' : ' aciertos');
+        if (e.pos) I18N.setT($('f-pos'), 'a.quedado', { pos: e.pos, n: e.jugadores }); else $('f-pos').textContent = '';
+        I18N.setT($('f-pts'), 'a.aciertos', { n: e.puntos });
         mostrar('v-final');
         olvidar();
       }
     });
 
-    socket.on('alumno:expulsado', () => { olvidar(); sesion = null; mostrar('v-entrada'); error('El profesor te ha sacado de la partida.'); });
-    socket.on('alumno:cerrada', () => { olvidar(); sesion = null; mostrar('v-entrada'); error('La partida se ha cerrado.'); });
+    socket.on('alumno:expulsado', () => { olvidar(); sesion = null; mostrar('v-entrada'); error('expulsado'); });
+    socket.on('alumno:cerrada', () => { olvidar(); sesion = null; mostrar('v-entrada'); error('partida_cerrada'); });
 
     function pintarPregunta(e) {
-      $('p-num').textContent = 'Pregunta ' + (e.indice + 1) + ' de ' + e.total;
+      I18N.setT($('p-num'), 'a.pregunta_n_de', { i: e.indice + 1, n: e.total });
       const cont = $('p-opciones');
       cont.innerHTML = '';
       cont.className = 'opciones' + (e.nOpciones === 2 ? ' dos' : e.nOpciones === 3 ? ' tres' : '');
@@ -127,9 +127,9 @@
       const sinResp = e.elegida === null || e.elegida === undefined;
       caja.className = 'pantalla-color ' + (e.acierto ? 'acierto' : 'fallo');
       $('r-icono').textContent = e.acierto ? '✓' : '✗';
-      $('r-titulo').textContent = e.acierto ? '¡Correcto!' : (sinResp ? 'Sin respuesta' : 'Incorrecto');
-      $('r-detalle').textContent = e.acierto ? '' : 'La respuesta correcta era la ' + LETRAS[e.correcta] + ' ' + FORMAS[e.correcta];
-      $('r-pos').textContent = (e.pos ? 'Vas ' + ordinal(e.pos) + ' · ' : '') + e.puntos + (e.puntos === 1 ? ' punto' : ' puntos');
+      I18N.setT($('r-titulo'), e.acierto ? 'a.correcto' : (sinResp ? 'a.sin_respuesta' : 'a.incorrecto'));
+      if (e.acierto) $('r-detalle').textContent = ''; else I18N.setT($('r-detalle'), 'a.era', { l: LETRAS[e.correcta], f: FORMAS[e.correcta] });
+      $('r-pos').replaceChildren(...(e.pos ? [I18N.nodo(I18N.T('a.posicion', { pos: e.pos })), ' · '] : []), I18N.nodo(I18N.T('a.puntos', { n: e.puntos })));
       mostrar('v-resultado');
     }
 

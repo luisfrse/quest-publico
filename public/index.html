@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="ca">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#46178f">
-  <title>Quest</title>
+  <title data-i18n-doc="a.doc">Quest</title>
   <link rel="stylesheet" href="/quest.css">
 </head>
 <body class="alumno">
@@ -15,26 +15,26 @@
       <h1 class="logo">Quest</h1>
       <p class="error" id="error" hidden></p>
       <form id="form-entrada" autocomplete="off">
-        <label class="campo"><span>Código de la partida</span>
+        <label class="campo"><span data-i18n="a.codigo_partida"></span>
           <input id="in-pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" required>
         </label>
-        <label class="campo"><span>Tu nombre</span>
-          <input id="in-nombre" maxlength="24" placeholder="Nombre (y apellido si hay repetidos)" required>
+        <label class="campo"><span data-i18n="a.tu_nombre"></span>
+          <input id="in-nombre" maxlength="24" data-i18n-ph="a.nombre_ph" required>
         </label>
-        <label class="campo"><span>Tu clase</span>
-          <input id="in-clase" maxlength="16" placeholder="Ej.: 1A, 2B…" required>
+        <label class="campo"><span data-i18n="a.tu_clase"></span>
+          <input id="in-clase" maxlength="16" data-i18n-ph="a.clase_ph" required>
         </label>
-        <button class="btn grande" type="submit" id="btn-entrar">Entrar</button>
+        <button class="btn grande" type="submit" id="btn-entrar" data-i18n="a.entrar"></button>
       </form>
-      <p class="enlace-pie"><a href="/profesor">Soy profesor</a></p>
+      <p class="enlace-pie"><a href="/profesor" data-i18n="a.soy_profe"></a></p>
     </div>
   </main>
 
   <!-- Sala de espera -->
   <main class="centro" id="v-lobby" hidden>
     <div class="logo" style="font-size:2.4rem">Quest</div>
-    <p class="mensaje-grande">¡Estás dentro, <span id="lobby-nombre"></span>!</p>
-    <p class="mensaje-suave">Mira la pantalla de la clase. Esperando a que empiece el juego…</p>
+    <p class="mensaje-grande" id="lobby-msg"></p>
+    <p class="mensaje-suave" data-i18n="a.mira_pantalla"></p>
   </main>
 
   <!-- Pregunta -->
@@ -42,14 +42,14 @@
     <div class="barra"><span id="p-num"></span><span id="p-tiempo"></span></div>
     <div class="tiempo-pista"><i id="p-barra"></i></div>
     <div class="opciones" id="p-opciones"></div>
-    <div class="pie">Mira la pantalla y toca el color de tu respuesta</div>
+    <div class="pie" data-i18n="a.pie_toca"></div>
   </section>
 
   <!-- Respuesta enviada -->
   <section class="pantalla-color neutro" id="v-enviada" hidden>
     <div class="icono">✓</div>
-    <p class="mensaje-grande">Respuesta enviada</p>
-    <p>Esperando al resto de la clase…</p>
+    <p class="mensaje-grande" data-i18n="a.enviada"></p>
+    <p data-i18n="a.espera_resto"></p>
   </section>
 
   <!-- Resultado de la pregunta -->
@@ -63,13 +63,14 @@
   <!-- Final -->
   <main class="centro" id="v-final" hidden>
     <div class="logo" style="font-size:2.4rem">Quest</div>
-    <p class="mensaje-grande">¡Fin del cuestionario!</p>
+    <p class="mensaje-grande" data-i18n="a.fin"></p>
     <p class="mensaje-grande" id="f-pos"></p>
     <p class="mensaje-suave" id="f-pts"></p>
-    <button class="btn" id="btn-otra" style="margin-top:1.5rem">Salir</button>
+    <button class="btn" id="btn-otra" style="margin-top:1.5rem" data-i18n="a.salir"></button>
   </main>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="/i18n.js"></script>
   <script src="/js/alumno.js"></script>
 </body>
 </html>

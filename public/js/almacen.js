@@ -106,12 +106,11 @@ export function nombreSeguro(texto) {
   return String(texto).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'quest';
 }
 
-export function fechaCorta(iso) {
-  const d = new Date(iso);
-  const dia = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const hora = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-  return dia + ' ' + hora;
-}
+// Fecha y hora en el idioma elegido (I18N es global: lo carga /i18n.js antes que los módulos)
+export function fechaCorta(iso) { return window.I18N.fechaHora(iso); }
+
+// Error con clave del diccionario: quien lo muestra lo traduce con I18N.t(e.k, e.v)
+function err(k, v) { const e = new Error(k); e.k = k; e.v = v; return e; }
 
 // ---- CSV de resultados (separador «;» y BOM para que Excel respete las tildes) ----
 function celdaCsv(valor) {
@@ -121,10 +120,11 @@ function celdaCsv(valor) {
   return s;
 }
 
-const segundos = (ms) => (ms / 1000).toFixed(2).replace('.', ',');
+const segundos = (ms) => window.I18N.segNum(ms);
+const tr = (k) => window.I18N.t(k);
 
 export function csvNotas(partidas) {
-  const lineas = [['fecha', 'nombre', 'clase', 'cuestionario', 'fallos', 'puntuacion total', 'tiempo total (s)'].join(';')];
+  const lineas = [['csv.fecha', 'csv.nombre', 'csv.clase', 'csv.cuestionario', 'csv.fallos', 'csv.puntuacion', 'csv.tiempo_total'].map(tr).join(';')];
   for (const p of partidas) {
     for (const j of p.jugadores) {
       lineas.push([fechaCorta(p.fecha), j.nombre, j.clase, p.titulo, j.fallos, j.puntos, segundos(j.tiempoMs)].map(celdaCsv).join(';'));
@@ -135,16 +135,16 @@ export function csvNotas(partidas) {
 
 export function csvDetalle(partidas) {
   const L = ['A', 'B', 'C', 'D'];
-  const lineas = [['fecha', 'nombre', 'clase', 'cuestionario', 'pregunta nº', 'pregunta', 'respuesta del alumno', 'respuesta correcta', 'acierto', 'tiempo (s)'].join(';')];
+  const lineas = [['csv.fecha', 'csv.nombre', 'csv.clase', 'csv.cuestionario', 'csv.pregunta_n', 'csv.pregunta', 'csv.resp_alumno', 'csv.resp_correcta', 'csv.acierto', 'csv.tiempo_s'].map(tr).join(';')];
   for (const p of partidas) {
     for (const j of p.jugadores) {
       p.preguntas.forEach((q, i) => {
         const r = j.resp[i];
         lineas.push([
           fechaCorta(p.fecha), j.nombre, j.clase, p.titulo, i + 1, q.texto,
-          r ? L[r[0]] + ': ' + q.opciones[r[0]] : 'sin respuesta',
+          r ? L[r[0]] + ': ' + q.opciones[r[0]] : tr('csv.sin_resp'),
           L[q.correcta] + ': ' + q.opciones[q.correcta],
-          r && r[0] === q.correcta ? 'sí' : 'no',
+          tr(r && r[0] === q.correcta ? 'csv.si' : 'csv.no'),
           r ? segundos(r[1]) : '',
         ].map(celdaCsv).join(';'));
       });
@@ -209,10 +209,10 @@ export function importarCopia(contenido) {
   try {
     datos = JSON.parse(contenido);
   } catch (e) {
-    throw new Error('El archivo no es una copia de seguridad de Quest.');
+    throw err('bk.no_copia');
   }
   if (!datos || datos.app !== 'quest' || !Array.isArray(datos.biblioteca) || !Array.isArray(datos.historial)) {
-    throw new Error('El archivo no es una copia de seguridad de Quest.');
+    throw err('bk.no_copia');
   }
   let descartados = 0;
   const biblio = biblioteca.listar();
@@ -233,7 +233,7 @@ export function importarCopia(contenido) {
   }
   hist.sort((a, b) => Date.parse(b.fecha) - Date.parse(a.fecha));
   if (!escribir(K_BIBLIOTECA, biblio) || !escribir(K_HISTORIAL, hist.slice(0, MAX_PARTIDAS_HISTORIAL))) {
-    throw new Error('No hay espacio en este navegador para importar la copia.');
+    throw err('bk.sin_espacio');
   }
   return { cuestionarios: nuevosC, partidas: nuevasP, descartados };
 }

@@ -11,6 +11,9 @@ function normalizarCabecera(h) {
   return quitarAcentos(h).toLowerCase().replace(/^﻿/, '').replace(/[\s_\-.]/g, '');
 }
 
+// Los mensajes son { k, v }: clave y variables del diccionario (I18N), que traduce quien los muestra.
+function err(k, v) { const e = new Error(k); e.k = k; e.v = v; return e; }
+
 function limpiar(v) {
   return String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
 }
@@ -76,24 +79,24 @@ function textoDeNodos(nodo) {
 
 export function leerXlsx(buffer) {
   const f = window.fflate;
-  if (!f) throw new Error('No se pudo cargar el lector de Excel. Recarga la página.');
+  if (!f) throw err('imp.sin_lector');
   let ficheros;
   try {
     ficheros = f.unzipSync(new Uint8Array(buffer));
   } catch (e) {
-    throw new Error('Este archivo no es un Excel (.xlsx) válido.');
+    throw err('imp.no_xlsx');
   }
   const leerTexto = (ruta) => (ficheros[ruta] ? f.strFromU8(ficheros[ruta]) : null);
   const xml = (s) => new DOMParser().parseFromString(s, 'application/xml');
 
   const wb = leerTexto('xl/workbook.xml');
-  if (!wb) throw new Error('Este archivo no es un Excel (.xlsx) válido.');
+  if (!wb) throw err('imp.no_xlsx');
   const NS_REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
   const hojas = Array.from(xml(wb).getElementsByTagName('sheet')).map((s) => ({
     nombre: s.getAttribute('name') || '',
     rid: s.getAttribute('r:id') || s.getAttributeNS(NS_REL, 'id'),
   }));
-  if (!hojas.length) throw new Error('El Excel no tiene hojas.');
+  if (!hojas.length) throw err('imp.sin_hojas');
 
   const rels = {};
   const relsXml = leerTexto('xl/_rels/workbook.xml.rels');
@@ -104,7 +107,7 @@ export function leerXlsx(buffer) {
   let destino = rels[hoja.rid] || 'worksheets/sheet1.xml';
   destino = destino.startsWith('/') ? destino.slice(1) : 'xl/' + destino.replace(/^\.\//, '');
   const hojaXml = leerTexto(destino);
-  if (!hojaXml) throw new Error('No se pudo leer la hoja del Excel.');
+  if (!hojaXml) throw err('imp.no_hoja');
 
   const compartidas = [];
   const ssXml = leerTexto('xl/sharedStrings.xml');
@@ -139,7 +142,7 @@ export function leerXlsx(buffer) {
 export function filasAPreguntas(filas, { maxPreguntas = 100 } = {}) {
   const res = { preguntas: [], avisos: [], errores: [] };
   const idx = filas.findIndex((f) => f.some((c) => limpiar(c) !== ''));
-  if (idx < 0) { res.errores.push('El archivo está vacío.'); return res; }
+  if (idx < 0) { res.errores.push({ k: 'imp.vacio' }); return res; }
 
   const cab = filas[idx].map(normalizarCabecera);
   const col = (n) => cab.indexOf(n);
@@ -153,17 +156,14 @@ export function filasAPreguntas(filas, { maxPreguntas = 100 } = {}) {
   if (iC < 0) falta.push('correcta');
   if (iI[0] < 0) falta.push('incorrecta1');
   if (falta.length) {
-    res.errores.push(
-      'En la primera fila falta la columna: ' + falta.join(', ') +
-      '. Usa la plantilla (primera fila: numero, tiempo, pregunta, correcta, incorrecta1, incorrecta2, incorrecta3).'
-    );
+    res.errores.push({ k: 'imp.falta_columna', v: { c: falta.join(', ') } });
     return res;
   }
 
   const dato = (f, i) => (i < 0 ? '' : limpiar(f[i]));
   const recortar = (texto, max, fila, que) => {
     if (texto.length <= max) return texto;
-    res.avisos.push(`Fila ${fila}: ${que} recortada a ${max} caracteres.`);
+    res.avisos.push({ k: 'w.recortada_' + que, v: { n: fila, max } });
     return texto.slice(0, max);
   };
 
@@ -175,22 +175,22 @@ export function filasAPreguntas(filas, { maxPreguntas = 100 } = {}) {
     let incorrectas = iI.map((i) => dato(f, i)).filter(Boolean);
     if (!texto && !correcta && !incorrectas.length) continue; // fila vacía (solo el número)
     if (!texto || !correcta || !incorrectas.length) {
-      res.avisos.push(`Fila ${nFila}: falta la pregunta, la correcta o alguna incorrecta; se omite.`);
+      res.avisos.push({ k: 'w.fila_incompleta', v: { n: nFila } });
       continue;
     }
-    texto = recortar(texto, 500, nFila, 'la pregunta');
-    correcta = recortar(correcta, 300, nFila, 'la respuesta correcta');
-    incorrectas = incorrectas.map((x) => recortar(x, 300, nFila, 'una incorrecta'));
+    texto = recortar(texto, 500, nFila, 'pregunta');
+    correcta = recortar(correcta, 300, nFila, 'correcta');
+    incorrectas = incorrectas.map((x) => recortar(x, 300, nFila, 'incorrecta'));
     const antes = incorrectas.length;
     const vistas = new Set([correcta.toLowerCase()]);
     incorrectas = incorrectas.filter((x) => { const k = x.toLowerCase(); if (vistas.has(k)) return false; vistas.add(k); return true; });
-    if (incorrectas.length !== antes) res.avisos.push(`Fila ${nFila}: había respuestas repetidas; se ignoran las duplicadas.`);
-    if (!incorrectas.length) { res.avisos.push(`Fila ${nFila}: sin respuestas incorrectas distintas de la correcta; se omite.`); continue; }
+    if (incorrectas.length !== antes) res.avisos.push({ k: 'w.repetidas', v: { n: nFila } });
+    if (!incorrectas.length) { res.avisos.push({ k: 'w.sin_distintas', v: { n: nFila } }); continue; }
 
     const crudoT = dato(f, iT);
     let tiempo = parseInt(crudoT.replace(/[^0-9]/g, ''), 10);
     if (!Number.isFinite(tiempo) || tiempo < 3) {
-      if (crudoT !== '') res.avisos.push(`Fila ${nFila}: tiempo «${crudoT}» no válido; se usan 20 s.`);
+      if (crudoT !== '') res.avisos.push({ k: 'w.tiempo', v: { n: nFila, t: crudoT } });
       tiempo = 20;
     }
     if (tiempo > 600) tiempo = 600;
@@ -199,21 +199,21 @@ export function filasAPreguntas(filas, { maxPreguntas = 100 } = {}) {
   }
 
   res.preguntas.sort((a, b) => a.numero - b.numero);
-  if (!res.preguntas.length) res.errores.push('No hay ninguna pregunta completa (pregunta, correcta y al menos una incorrecta).');
+  if (!res.preguntas.length) res.errores.push({ k: 'imp.sin_preguntas' });
   if (res.preguntas.length > maxPreguntas) {
-    res.errores.push(`Tiene ${res.preguntas.length} preguntas y el máximo es ${maxPreguntas}. Divídelo en dos cuestionarios.`);
+    res.errores.push({ k: 'imp.demasiadas', v: { n: res.preguntas.length, max: maxPreguntas } });
   }
   return res;
 }
 
 export async function leerArchivo(archivo, opciones) {
-  if (archivo.size > MAX_BYTES) throw new Error('El archivo es demasiado grande (máximo 3 MB).');
+  if (archivo.size > MAX_BYTES) throw err('imp.grande');
   const buffer = await archivo.arrayBuffer();
   const bytes = new Uint8Array(buffer.slice(0, 2));
   const ext = ((archivo.name.match(/\.([^.]+)$/) || [])[1] || '').toLowerCase();
   const esZip = bytes[0] === 0x50 && bytes[1] === 0x4b;
   let filas;
-  if (ext === 'xls') throw new Error('El formato .xls antiguo no se admite. Guárdalo como .xlsx o como CSV.');
+  if (ext === 'xls') throw err('imp.xls');
   if (ext === 'xlsx' || ext === 'xlsm' || esZip) filas = leerXlsx(buffer);
   else filas = parsearCsv(decodificar(buffer));
   const titulo = archivo.name.replace(/\.[^.]+$/, '');

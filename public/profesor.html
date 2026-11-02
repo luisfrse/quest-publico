@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="ca">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quest · Profesor</title>
+  <title data-i18n-doc="p.doc">Quest · Professor</title>
   <link rel="stylesheet" href="/quest.css">
 </head>
 <body class="profesor">
@@ -12,6 +12,7 @@
     <span class="logo">Quest</span>
     <span class="titulo" id="cab-titulo"></span>
     <span class="cab-derecha">
+      <span class="cab-idioma" data-lang-slot></span>
       <span class="sesion-mini" id="cab-sesion" hidden></span>
       <span class="pin-mini" id="cab-pin" hidden></span>
     </span>
@@ -20,11 +21,12 @@
   <div class="pagina">
     <main class="principal" id="principal"></main>
     <aside class="lateral" id="lateral" hidden>
-      <h2 id="lat-titulo">Ranking</h2>
+      <h2 id="lat-titulo"></h2>
       <ol class="ranking" id="ranking"></ol>
     </aside>
   </div>
 
+  <script src="/i18n.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/vendor/fflate.js"></script>
   <script type="module" src="/js/profesor.js"></script>

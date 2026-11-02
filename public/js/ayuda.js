@@ -6,7 +6,8 @@
       const v = c.limites && c.limites[e.dataset.lim];
       if (v) e.textContent = String(v);
     }
-    const a = document.getElementById('enlace-contacto');
-    if (a && c.contactUrl) a.href = c.contactUrl;
+    for (const a of document.querySelectorAll('.enlace-contacto, #enlace-contacto')) {
+      if (c.contactUrl) a.href = c.contactUrl;
+    }
   } catch (e) { /* se dejan los valores por defecto */ }
 })();

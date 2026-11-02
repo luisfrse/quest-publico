@@ -146,7 +146,8 @@ function limitador(maximo, ventanaMs) {
   };
 }
 
-const limAcceso = limitador(8, 15 * 60 * 1000); // 8 códigos erróneos cada 15 min por IP
+const limAcceso = limitador(5, 15 * 60 * 1000); // 5 códigos erróneos cada 15 min por IP
+const limAdmin = limitador(5, 15 * 60 * 1000); // 5 contraseñas de /admin erróneas cada 15 min por IP
 const limUnirse = limitador(40, 10 * 60 * 1000); // 40 PIN erróneos cada 10 min por IP
 
 // ---------------------------------------------------------------------------
@@ -178,7 +179,19 @@ function invalidarSesionesDe(codigoId) {
 // ---------------------------------------------------------------------------
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { maxHttpBufferSize: 5e5 });
+const io = new Server(server, {
+  maxHttpBufferSize: 5e5,
+  allowRequest: (req, cb) => {
+    // Los navegadores envían Origin: solo se acepta el del propio sitio (evita que otra web abra sockets con las sesiones de tus usuarios).
+    const origin = req.headers.origin;
+    if (!origin) return cb(null, true); // clientes que no son navegador
+    let host;
+    try { host = new URL(origin).host.toLowerCase(); } catch (e) { return cb(null, false); }
+    const reenviado = String(req.headers['x-forwarded-host'] || '').split(',')[0].trim().toLowerCase();
+    const propio = String(req.headers.host || '').toLowerCase();
+    cb(null, host === reenviado || host === propio);
+  },
+});
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -195,20 +208,26 @@ app.use((req, res, next) => {
 });
 
 function requiereClaveAdmin(req, res, next) {
+  const ip = ipDeCabecera(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+  if (limAdmin.bloqueado(ip)) {
+    if (req.path.startsWith('/api/')) return res.status(429).json({ error: 'demasiados_intentos' });
+    return res.status(429).type('text/plain; charset=utf-8').send('Demasiados intentos fallidos. Espera unos minutos. / Massa intents fallits. Espera uns minuts.');
+  }
   const cabecera = req.headers.authorization || '';
   if (cabecera.startsWith('Basic ')) {
     const dec = Buffer.from(cabecera.slice(6), 'base64').toString('utf8');
     const i = dec.indexOf(':');
-    if (iguales(i >= 0 ? dec.slice(i + 1) : dec, ADMIN_PASSWORD)) return next();
+    if (iguales(i >= 0 ? dec.slice(i + 1) : dec, ADMIN_PASSWORD)) { limAdmin.exito(ip); return next(); }
+    limAdmin.fallo(ip); // solo cuenta si llegó una contraseña errónea; la primera visita sin credenciales no
   }
   res.setHeader('WWW-Authenticate', 'Basic realm="Quest (administrador)", charset="UTF-8"');
-  res.status(401).send('Se requiere contraseña');
+  res.status(401).send('Se requiere contraseña / Es requereix contrasenya');
 }
 
 function requiereSesion(req, res, next) {
   const h = req.headers.authorization || '';
   const s = h.startsWith('Bearer ') ? sesionPorToken(h.slice(7)) : null;
-  if (!s) return res.status(401).json({ error: 'Sesión no válida' });
+  if (!s) return res.status(401).json({ error: 'sesion_invalida' });
   req.sesion = s;
   next();
 }
@@ -222,12 +241,12 @@ app.get('/api/config', (req, res) => {
 
 app.post('/api/acceso', express.json({ limit: '2kb' }), (req, res) => {
   const ip = ipDeCabecera(req.headers['x-forwarded-for'], req.socket.remoteAddress);
-  if (limAcceso.bloqueado(ip)) return res.status(429).json({ error: 'Demasiados intentos fallidos. Espera unos minutos.' });
+  if (limAcceso.bloqueado(ip)) return res.status(429).json({ error: 'demasiados_intentos' });
   const codigo = normalizarCodigo(req.body && req.body.codigo);
   const fila = codigo ? db.prepare('SELECT * FROM codigos WHERE codigo = ?').get(codigo) : null;
   if (!fila || estadoCodigo(fila) !== 'activo') {
     limAcceso.fallo(ip);
-    return res.status(401).json({ error: 'Código no válido, revocado o caducado.' });
+    return res.status(401).json({ error: 'codigo_invalido' });
   }
   limAcceso.exito(ip);
   res.json({
@@ -287,9 +306,9 @@ app.get('/api/admin/codigos', requiereClaveAdmin, (req, res) => {
 
 app.post('/api/admin/codigos', requiereClaveAdmin, express.json({ limit: '2kb' }), (req, res) => {
   const etiqueta = limpiarTexto(req.body && req.body.etiqueta, 60);
-  if (!etiqueta) return res.status(400).json({ error: 'Escribe a quién corresponde el código.' });
+  if (!etiqueta) return res.status(400).json({ error: 'falta_etiqueta' });
   let caduca = req.body && req.body.caduca ? String(req.body.caduca) : null;
-  if (caduca && !/^\d{4}-\d{2}-\d{2}$/.test(caduca)) return res.status(400).json({ error: 'Fecha de caducidad no válida.' });
+  if (caduca && !/^\d{4}-\d{2}-\d{2}$/.test(caduca)) return res.status(400).json({ error: 'fecha_invalida' });
   if (!caduca) caduca = null;
   for (let i = 0; i < 10; i++) {
     try {
@@ -301,20 +320,20 @@ app.post('/api/admin/codigos', requiereClaveAdmin, express.json({ limit: '2kb' }
       if (!/UNIQUE/.test(String(e.message))) throw e;
     }
   }
-  res.status(500).json({ error: 'No se pudo generar un código único.' });
+  res.status(500).json({ error: 'no_codigo_unico' });
 });
 
 app.patch('/api/admin/codigos/:id', requiereClaveAdmin, express.json({ limit: '2kb' }), (req, res) => {
   const id = parseInt(req.params.id, 10) || 0;
   const fila = db.prepare('SELECT * FROM codigos WHERE id = ?').get(id);
-  if (!fila) return res.status(404).json({ error: 'No existe ese código.' });
+  if (!fila) return res.status(404).json({ error: 'no_existe_codigo' });
   if (req.body && typeof req.body.revocado === 'boolean') {
     db.prepare('UPDATE codigos SET revocado = ? WHERE id = ?').run(req.body.revocado ? 1 : 0, id);
     if (req.body.revocado) cerrarPartidasDe(id, 'revocado');
   }
   if (req.body && 'caduca' in req.body) {
     const c = req.body.caduca ? String(req.body.caduca) : null;
-    if (c && !/^\d{4}-\d{2}-\d{2}$/.test(c)) return res.status(400).json({ error: 'Fecha de caducidad no válida.' });
+    if (c && !/^\d{4}-\d{2}-\d{2}$/.test(c)) return res.status(400).json({ error: 'fecha_invalida' });
     db.prepare('UPDATE codigos SET caduca = ? WHERE id = ?').run(c, id);
   }
   res.json(filaPublica(db.prepare('SELECT * FROM codigos WHERE id = ?').get(id)));
@@ -340,6 +359,8 @@ app.get('/api/admin/estado', requiereClaveAdmin, (req, res) => {
 const PUBLIC = path.join(__dirname, 'public');
 app.get('/profesor', (req, res) => res.sendFile(path.join(PUBLIC, 'profesor.html')));
 app.get('/ayuda', (req, res) => res.sendFile(path.join(PUBLIC, 'ayuda.html')));
+// Enlace antiguo (antes solo había una guía): se envía a la guía en el idioma del navegador
+app.get('/Guia-Quest.pdf', (req, res) => res.redirect(/^es\b/i.test(req.headers['accept-language'] || '') ? '/Guia-Quest-es.pdf' : '/Guia-Quest-ca.pdf'));
 app.get('/admin', requiereClaveAdmin, (req, res) => res.sendFile(path.join(__dirname, 'views', 'admin.html')));
 // Lector de .xlsx (fflate) servido desde node_modules
 app.get('/vendor/fflate.js', (req, res) =>
@@ -348,7 +369,7 @@ app.use(express.static(PUBLIC, { index: 'index.html' }));
 
 app.use((err, req, res, next) => {
   if (res.headersSent) return next(err);
-  res.status(400).json({ error: 'Petición no válida' });
+  res.status(400).json({ error: 'peticion_invalida' });
 });
 
 // ---------------------------------------------------------------------------
@@ -364,13 +385,16 @@ function generarPin() {
   throw new Error('No se pudo generar un PIN libre');
 }
 
+// Error con código: el cliente lo traduce al idioma elegido
+function errorCodigo(codigo, vars) { const e = new Error(codigo); e.codigo = codigo; e.vars = vars; return e; }
+
 // Valida y limpia el cuestionario que envía el navegador del profesor.
 function sanearCuestionario(datos) {
-  if (!datos || typeof datos !== 'object') throw new Error('Cuestionario no válido');
+  if (!datos || typeof datos !== 'object') throw errorCodigo('cuestionario_invalido');
   const titulo = limpiarTexto(datos.titulo, 80) || 'Cuestionario';
   const origen = Array.isArray(datos.preguntas) ? datos.preguntas : [];
-  if (!origen.length) throw new Error('El cuestionario no tiene preguntas');
-  if (origen.length > LIMITES.preguntas) throw new Error(`Máximo ${LIMITES.preguntas} preguntas por cuestionario`);
+  if (!origen.length) throw errorCodigo('cuestionario_vacio');
+  if (origen.length > LIMITES.preguntas) throw errorCodigo('max_preguntas', { n: LIMITES.preguntas });
   const lista = origen.map((p, i) => {
     const texto = limpiarTexto(p && p.texto, 500);
     const correcta = limpiarTexto(p && p.correcta, 300);
@@ -378,7 +402,7 @@ function sanearCuestionario(datos) {
       .slice(0, 3)
       .map((x) => limpiarTexto(x, 300))
       .filter((x) => x && x.toLowerCase() !== correcta.toLowerCase());
-    if (!texto || !correcta || !incorrectas.length) throw new Error(`La pregunta ${i + 1} está incompleta`);
+    if (!texto || !correcta || !incorrectas.length) throw errorCodigo('pregunta_incompleta', { n: i + 1 });
     let tiempo = parseInt(p.tiempo, 10);
     if (!Number.isFinite(tiempo) || tiempo < 3) tiempo = 20;
     if (tiempo > 600) tiempo = 600;
@@ -635,6 +659,7 @@ setInterval(() => {
   for (const [t, s] of sesiones) if (s.exp < ahora) sesiones.delete(t);
   limAcceso.purgar();
   limUnirse.purgar();
+  limAdmin.purgar();
 }, 5 * 60 * 1000).unref();
 
 // ---------------------------------------------------------------------------
@@ -653,20 +678,20 @@ io.on('connection', (socket) => {
   socket.on('profesor:crear', (datos, cb) => {
     try {
       const sesion = sesionPorToken(datos && datos.token);
-      if (!sesion) return responder(cb, { ok: false, sesion: false, error: 'Sesión caducada. Vuelve a entrar con tu código.' });
+      if (!sesion) return responder(cb, { ok: false, sesion: false, error: 'sesion_caducada' });
 
       let quiz;
-      try { quiz = sanearCuestionario(datos); } catch (e) { return responder(cb, { ok: false, error: e.message }); }
+      try { quiz = sanearCuestionario(datos); } catch (e) { return responder(cb, { ok: false, error: e.codigo || 'no_crear_partida', vars: e.vars }); }
 
       let propias = 0;
       for (const p of partidasActivas.values()) if (p.codigoId === sesion.codigoId && p.fase !== 'final') propias += 1;
       if (propias >= LIMITES.partidasPorCodigo) {
-        return responder(cb, { ok: false, error: `Ya tienes ${propias} partidas abiertas. Cierra alguna antes de crear otra.` });
+        return responder(cb, { ok: false, error: 'max_partidas_codigo', vars: { n: propias } });
       }
       let totales = 0;
       for (const p of partidasActivas.values()) if (p.fase !== 'final') totales += 1;
       if (totales >= LIMITES.partidasTotal) {
-        return responder(cb, { ok: false, error: 'El servidor está al máximo de partidas simultáneas. Inténtalo de nuevo en unos minutos.' });
+        return responder(cb, { ok: false, error: 'servidor_lleno' });
       }
 
       partida = nuevaPartida(sesion, quiz, socket.id);
@@ -677,7 +702,7 @@ io.on('connection', (socket) => {
       emitirProfesor(partida);
     } catch (e) {
       console.error('[Quest] Error al crear partida:', e);
-      responder(cb, { ok: false, error: 'No se pudo crear la partida' });
+      responder(cb, { ok: false, error: 'no_crear_partida' });
     }
   });
 
@@ -735,17 +760,17 @@ io.on('connection', (socket) => {
 
   // ----- Alumno -----
   socket.on('alumno:unirse', (datos, cb) => {
-    if (limUnirse.bloqueado(ip)) return responder(cb, { ok: false, error: 'Demasiados intentos. Espera unos minutos.' });
-    if (!datos) return responder(cb, { ok: false, error: 'Datos no válidos' });
+    if (limUnirse.bloqueado(ip)) return responder(cb, { ok: false, error: 'demasiados_intentos' });
+    if (!datos) return responder(cb, { ok: false, error: 'datos_invalidos' });
     const pin = String(datos.pin || '').replace(/\D/g, '');
     const p = partidasActivas.get(pin);
     if (!p || p.cerrada || p.fase === 'final') {
       limUnirse.fallo(ip);
-      return responder(cb, { ok: false, error: 'Código no válido o partida terminada' });
+      return responder(cb, { ok: false, error: 'pin_invalido' });
     }
     const nombre = limpiarTexto(datos.nombre, 24);
     const clase = limpiarTexto(datos.clase, 16);
-    if (!nombre || !clase) return responder(cb, { ok: false, error: 'Escribe tu nombre y tu clase' });
+    if (!nombre || !clase) return responder(cb, { ok: false, error: 'falta_nombre_clase' });
 
     // Reconexión: mismo id guardado en el móvil, o mismo nombre y clase
     let j = null;
@@ -758,10 +783,10 @@ io.on('connection', (socket) => {
     }
     if (j) {
       if (j.conectado && j.socketId && j.socketId !== socket.id && io.sockets.sockets.get(j.socketId)) {
-        if (!datos.id || datos.id !== j.id) return responder(cb, { ok: false, error: 'Ya hay alguien conectado con ese nombre y clase' });
+        if (!datos.id || datos.id !== j.id) return responder(cb, { ok: false, error: 'nombre_en_uso' });
       }
     } else {
-      if (p.jugadores.size >= LIMITES.jugadores) return responder(cb, { ok: false, error: 'La partida está llena' });
+      if (p.jugadores.size >= LIMITES.jugadores) return responder(cb, { ok: false, error: 'partida_llena' });
       j = nuevoJugador(nombre, clase, socket.id);
       p.jugadores.set(j.id, j);
     }

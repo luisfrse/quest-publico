@@ -48,7 +48,7 @@ async function main() {
   const cod = await (await fetch(BASE + '/api/admin/codigos', { method: 'POST', headers: { Authorization: ADMIN, 'Content-Type': 'application/json' }, body: JSON.stringify({ etiqueta: 'Prueba E2E' }) })).json();
 
   navegador = await chromium.launch();
-  const ctx = await navegador.newContext({ acceptDownloads: true, viewport: { width: 1200, height: 800 } });
+  const ctx = await navegador.newContext({ locale: 'es-ES', acceptDownloads: true, viewport: { width: 1200, height: 800 } });
   const page = await ctx.newPage();
   const erroresConsola = [];
   page.on('pageerror', (e) => erroresConsola.push('pageerror: ' + e.message));

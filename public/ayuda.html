@@ -1,20 +1,117 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="ca">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quest · Guía para profesores</title>
+  <title data-i18n-doc="ay.doc">Quest · Guia per a professors</title>
   <link rel="stylesheet" href="/quest.css">
-  <style>@media print { html, body { background: #fff !important; } }</style>
+  <style>
+    @media print { html, body { background: #fff !important; } .selector-flotante { display: none !important; } }
+    html[lang="ca"] .ayuda-es, html[lang="es"] .ayuda-ca { display: none; }
+  </style>
 </head>
 <body>
 <main class="ayuda">
   <div class="logo" style="font-size:1.4rem">Quest</div>
-  <h1>Guía rápida para profesores</h1>
+<div class="ayuda-ca" lang="ca">
+  <h1>Guia ràpida per a professors</h1>
+  <p>Quest és una aplicació de qüestionaris en temps real, a l'estil de Kahoot: tu projectes les preguntes a classe i els alumnes responen des del mòbil tocant un dels quatre botons de colors.</p>
+
+  <div class="barra-descarga">
+    <a class="btn" data-pdf="ca" href="/Guia-Quest-ca.pdf" download>Descarrega aquesta guia (PDF)</a>
+    <a class="btn secundario" href="/plantillas/Plantilla-Quest.xlsx" download>Plantilla Excel</a>
+    <a class="btn secundario" href="/plantillas/Plantilla-Quest.csv" download>Plantilla CSV</a>
+    <a class="btn secundario" href="/profesor">Entra com a professor</a>
+  </div>
+
+  <h2>1. Abans de començar</h2>
+  <ul>
+    <li>Necessites un <strong>codi d'invitació</strong> personal. Te'l facilita l'administrador.</li>
+    <li>No tens codi? Si vols fer servir Quest gratis, demana'l des de l'<a class="enlace-contacto" href="https://luisfs.com">apartat de contacte del web</a>.</li>
+    <li>Els teus alumnes <strong>no necessiten codi ni compte</strong>: entren amb el PIN de cada partida.</li>
+  </ul>
+
+  <h2>2. Preparar un qüestionari</h2>
+  <p>Descarrega la plantilla (Excel o CSV) i escriu <strong>una pregunta per fila</strong>. La primera fila (capçalera) s'ha de conservar tal com està; els noms de les columnes són els mateixos en tots dos idiomes:</p>
+  <table>
+    <thead><tr><th>Columna</th><th>Què hi has de posar</th></tr></thead>
+    <tbody>
+      <tr><td><code>numero</code></td><td>Ordre de la pregunta (1, 2, 3…). Les preguntes s'ordenen per aquest número.</td></tr>
+      <tr><td><code>tiempo</code></td><td>Segons per respondre, entre 3 i 600. Si el deixes buit, 20 segons.</td></tr>
+      <tr><td><code>pregunta</code></td><td>L'enunciat que es projecta a classe (màxim 500 caràcters).</td></tr>
+      <tr><td><code>correcta</code></td><td>La resposta correcta (màxim 300 caràcters). Escriu-la només aquí.</td></tr>
+      <tr><td><code>incorrecta1</code></td><td>Una resposta incorrecta (obligatòria).</td></tr>
+      <tr><td><code>incorrecta2</code>, <code>incorrecta3</code></td><td>Més respostes incorrectes (opcionals). Amb menys de tres, la pregunta té 2 o 3 opcions.</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>Quest <strong>barreja les respostes</strong> en crear cada partida: no cal que la correcta sigui en una posició concreta.</li>
+    <li>Un qüestionari pot tenir fins a <strong><span data-lim="preguntas">100</span> preguntes</strong>.</li>
+    <li>Les files que només tenen el número (sense pregunta) s'ignoren. Les incompletes s'ometen i la vista prèvia t'ho adverteix.</li>
+    <li><strong>El nom del fitxer és el títol del qüestionari.</strong> Si el poses <code>ASSIGNATURA_Tema</code> (per exemple <code>C6_U1_Instrumental</code>), Quest l'agrupa en una carpeta amb el nom de l'assignatura.</li>
+  </ul>
+
+  <h2>3. Importar el qüestionari</h2>
+  <ol>
+    <li>Entra a l'adreça de Quest seguida de <code>/profesor</code> i escriu el teu codi.</li>
+    <li>Prem <strong>Importa un qüestionari</strong> (o arrossega el fitxer a la pantalla). S'admeten fitxers <code>.xlsx</code> i <code>.csv</code>.</li>
+    <li>Revisa la vista prèvia, canvia el nom si vols i prem <strong>Desa a la meva biblioteca</strong>.</li>
+  </ol>
+  <p>Si ja tenies un qüestionari amb el mateix nom, el nou el substitueix. Pots canviar-ne el nom (✎) o eliminar-lo (🗑) des de la llista.</p>
+
+  <h2>4. Jugar</h2>
+  <ol>
+    <li>Tria el qüestionari i prem <strong>Crea la partida</strong>. Projecta la pantalla: hi apareixen un <strong>PIN</strong> i un <strong>codi QR</strong>.</li>
+    <li>Els alumnes obren el web de Quest al mòbil (o escanegen el QR) i escriuen el PIN, el seu nom i la seva classe.</li>
+    <li>Quan siguin tots dins, prem <strong>Comença</strong>.</li>
+    <li>A cada pregunta corre el temps. La resposta correcta es mostra quan s'acaba el temps, quan han respost tots o quan prems <strong>Mostra la resposta</strong>. Després, <strong>Següent</strong> (també serveixen la barra espaiadora i la fletxa →).</li>
+    <li>El rànquing apareix en un lateral de la pantalla i s'actualitza en mostrar cada resposta.</li>
+  </ol>
+  <div class="destacado">
+    <strong>Puntuació.</strong> Cada encert val 1 punt; fallar o no respondre en val 0. La rapidesa no dona punts extra: el temps de resposta dels encerts només se suma per <strong>desempatar</strong> (queda per davant qui triga menys).
+  </div>
+  <ul>
+    <li>Si un alumne perd la connexió, pot tornar a entrar amb el mateix PIN, nom i classe i conserva els punts.</li>
+    <li>El botó <strong>Acaba</strong> tanca la partida; només compten les preguntes la resposta de les quals ja s'ha mostrat.</li>
+    <li>Límits: fins a <strong><span data-lim="jugadores">60</span> alumnes</strong> per partida.</li>
+  </ul>
+
+  <h2>5. Resultats</h2>
+  <p>En acabar, prem <strong>Descarrega les notes (CSV)</strong>. El fitxer porta data, nom, classe, qüestionari, errors, puntuació total i temps total, i s'obre directament a l'Excel o al Google Sheets. Amb <strong>Descarrega el detall (CSV)</strong> obtens també la resposta de cada alumne a cada pregunta. Les capçaleres del CSV surten en l'idioma que tinguis triat en descarregar-lo.</p>
+  <div class="destacado">
+    <strong>Important: el servidor no desa els resultats.</strong> Descarrega'ls en acabar. També queden a l'<strong>Historial</strong> del teu navegador (les últimes 60 partides), des d'on els pots tornar a descarregar.
+  </div>
+  <p>Si recarregues la pàgina amb una partida en marxa, hi pots tornar. Una partida es perd si el servidor es reinicia o si passen diverses hores sense activitat.</p>
+
+  <h2>6. Còpia de seguretat</h2>
+  <p>Els teus qüestionaris i el teu historial es desen <strong>només al teu navegador</strong>. Si esborres les dades del navegador, canvies d'ordinador o navegues en una finestra privada, no els veuràs.</p>
+  <ul>
+    <li>Fes servir <strong>Còpia de seguretat → Exporta la còpia (.json)</strong> de tant en tant i guarda el fitxer.</li>
+    <li>Per recuperar-la (o endur-te-la a un altre ordinador): <strong>Còpia de seguretat → Importa una còpia…</strong></li>
+    <li>Conserva sempre els teus fitxers originals d'Excel o CSV: són la teva millor còpia.</li>
+  </ul>
+
+  <h2>7. Privadesa</h2>
+  <ul>
+    <li>Les preguntes s'envien al servidor només en crear una partida, es desen <strong>únicament a la memòria</strong> i es descarten en tancar-la.</li>
+    <li>Els noms i les classes dels alumnes només existeixen a la memòria mentre dura la partida. No es desen al servidor.</li>
+    <li>L'únic que conserva el servidor és el teu codi d'invitació, quantes partides has creat i la data de l'últim ús.</li>
+  </ul>
+
+  <h2>8. Problemes freqüents</h2>
+  <ul>
+    <li><strong>«Codi no vàlid, revocat o caducat»:</strong> comprova que l'has escrit bé. Després de diversos intents fallits, l'accés es bloqueja uns minuts.</li>
+    <li><strong>No veig els meus qüestionaris:</strong> comprova que fas servir el mateix navegador i no una finestra privada, o importa la teva còpia de seguretat.</li>
+    <li><strong>Un alumne no pot entrar:</strong> el PIN canvia a cada partida; comprova que escriu l'actual i que la partida no ha acabat.</li>
+    <li><strong>«Ja tens N partides obertes»:</strong> hi ha un màxim de <span data-lim="partidasPorCodigo">3</span> partides simultànies per codi. Tanca'n alguna.</li>
+  </ul>
+</div>
+<div class="ayuda-es" lang="es">
+    <h1>Guía rápida para profesores</h1>
   <p>Quest es una aplicación de cuestionarios en tiempo real, al estilo de Kahoot: tú proyectas las preguntas en clase y los alumnos responden desde el móvil tocando uno de cuatro botones de colores.</p>
 
   <div class="barra-descarga">
-    <a class="btn" href="/Guia-Quest.pdf" download>Descargar esta guía (PDF)</a>
+    <a class="btn" data-pdf="es" href="/Guia-Quest-es.pdf" download>Descargar esta guía (PDF)</a>
     <a class="btn secundario" href="/plantillas/Plantilla-Quest.xlsx" download>Plantilla Excel</a>
     <a class="btn secundario" href="/plantillas/Plantilla-Quest.csv" download>Plantilla CSV</a>
     <a class="btn secundario" href="/profesor">Entrar como profesor</a>
@@ -101,8 +198,9 @@
     <li><strong>Un alumno no puede entrar:</strong> el PIN cambia en cada partida; comprueba que escribe el actual y que la partida no ha terminado.</li>
     <li><strong>«Ya tienes N partidas abiertas»:</strong> hay un máximo de <span data-lim="partidasPorCodigo">3</span> partidas simultáneas por código. Cierra alguna.</li>
   </ul>
-
-  <script src="/js/ayuda.js"></script>
+</div>
 </main>
+  <script src="/i18n.js"></script>
+  <script src="/js/ayuda.js"></script>
 </body>
 </html>

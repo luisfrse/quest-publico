@@ -451,3 +451,14 @@ summary.enlace-menu { list-style: none; }
   .ayuda { padding: 0; }
   .ayuda h2 { break-after: avoid; }
 }
+
+/* Selector de idioma CA | ES */
+.selector-idioma { display: inline-flex; border: 1.5px solid currentColor; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,.92); color: #46178f; font-family: inherit; }
+.selector-idioma button { appearance: none; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; font-size: .8rem; letter-spacing: .04em; padding: .3rem .75rem; cursor: pointer; min-width: 2.6rem; }
+.selector-idioma button.activo { background: #46178f; color: #fff; }
+.selector-idioma button:focus-visible { outline: 3px solid #ffa602; outline-offset: -3px; }
+.selector-flotante { position: fixed; top: .6rem; right: .6rem; z-index: 1000; }
+.cab-idioma { margin-left: auto; display: inline-flex; align-items: center; }
+
+/* Los avisos no deben tapar los botones de debajo */
+.toast { pointer-events: none; }

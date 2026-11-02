@@ -111,12 +111,13 @@ async function main() {
   const tokenAna = sesionAna.token;
   const tokenLuis = (await (await login(luis.codigo)).json()).token;
 
-  // Antifuerza bruta: 8 fallos por IP y se bloquea (incluso con un código bueno)
-  for (let i = 0; i < 8; i++) assert.strictEqual((await login('AAAAA-BBBBB', '10.7.7.7')).status, 401);
+  // Antifuerza bruta: 5 fallos por IP y el sexto se bloquea (incluso con un código bueno)
+  for (let i = 0; i < 5; i++) assert.strictEqual((await login('AAAAA-BBBBB', '10.7.7.7')).status, 401);
   assert.strictEqual((await login('AAAAA-BBBBB', '10.7.7.7')).status, 429);
   assert.strictEqual((await login(ana.codigo, '10.7.7.7')).status, 429);
   assert.strictEqual((await login(ana.codigo, '10.8.8.8')).status, 200);
-  ok('tras 8 códigos erróneos se bloquea esa IP (429) y las demás siguen entrando');
+  assert.strictEqual((await (await login(ana.codigo, '10.7.7.7')).json()).error, 'demasiados_intentos');
+  ok('5 códigos erróneos → 401; el sexto (y el bueno) → 429 con código demasiados_intentos; otras IP siguen entrando');
 
   // QR con sesión
   const qr = await fetch(BASE + '/api/qr?pin=123456', { headers: { Authorization: 'Bearer ' + tokenAna } });
@@ -138,7 +139,7 @@ async function main() {
   assert.strictEqual(sinToken.ok, false); assert.strictEqual(sinToken.sesion, false); ok('crear con token falso → rechazado');
   const muchas = { titulo: 'X', preguntas: Array.from({ length: 6 }, () => QUIZ.preguntas[0]) };
   const rMuchas = await ack(prof, 'profesor:crear', { token: tokenAna, ...muchas });
-  assert.strictEqual(rMuchas.ok, false); assert.match(rMuchas.error, /Máximo 5/); ok('más preguntas que el máximo → rechazado');
+  assert.strictEqual(rMuchas.ok, false); assert.strictEqual(rMuchas.error, 'max_preguntas'); assert.strictEqual(rMuchas.vars.n, 5); ok('más preguntas que el máximo → rechazado');
   const incompleta = await ack(prof, 'profesor:crear', { token: tokenAna, titulo: 'X', preguntas: [{ texto: 'a', correcta: 'b', incorrectas: [] }] });
   assert.strictEqual(incompleta.ok, false); ok('pregunta sin incorrectas → rechazada');
   const igualCorrecta = await ack(prof, 'profesor:crear', { token: tokenAna, titulo: 'X', preguntas: [{ texto: 'a', correcta: 'Sí', incorrectas: ['sí'] }] });
@@ -154,7 +155,7 @@ async function main() {
   const g2 = await ack(extra1, 'profesor:crear', { token: tokenAna, ...QUIZ });
   assert.ok(g2.ok);
   const g3 = await ack(extra2, 'profesor:crear', { token: tokenAna, ...QUIZ });
-  assert.strictEqual(g3.ok, false); assert.match(g3.error, /2 partidas abiertas/);
+  assert.strictEqual(g3.ok, false); assert.strictEqual(g3.error, 'max_partidas_codigo'); assert.strictEqual(g3.vars.n, 2);
   ok('límite de 2 partidas abiertas por código');
   const otroCodigo = await ack(extra2, 'profesor:crear', { token: tokenLuis, ...QUIZ });
   assert.ok(otroCodigo.ok); ok('el límite es por código: Luis sí puede crear la suya');
@@ -198,7 +199,7 @@ async function main() {
   assert.ok((await ack(s4, 'alumno:unirse', { pin, nombre: 'Cuarto', clase: '1C' })).ok);
   const s5 = await conectar('10.2.2.3');
   const r5 = await ack(s5, 'alumno:unirse', { pin, nombre: 'Quinto', clase: '1C' });
-  assert.strictEqual(r5.ok, false); assert.match(r5.error, /llena/);
+  assert.strictEqual(r5.ok, false); assert.strictEqual(r5.error, 'partida_llena');
   ok('límite de alumnos por partida (4 en esta prueba)');
   s4.close(); s5.close(); await dormir(100);
 
@@ -206,8 +207,8 @@ async function main() {
   const brute = await conectar('10.3.3.3');
   let ultimo;
   for (let i = 0; i < 41; i++) ultimo = await ack(brute, 'alumno:unirse', { pin: '000000', nombre: 'x', clase: 'y' });
-  assert.match(ultimo.error, /Demasiados intentos/);
-  assert.match((await ack(brute, 'alumno:unirse', { pin, nombre: 'Intruso', clase: '1Z' })).error, /Demasiados intentos/);
+  assert.strictEqual(ultimo.error, 'demasiados_intentos');
+  assert.strictEqual((await ack(brute, 'alumno:unirse', { pin, nombre: 'Intruso', clase: '1Z' })).error, 'demasiados_intentos');
   ok('tras 40 PIN erróneos se bloquea esa IP, incluso con el PIN bueno');
   brute.close();
 
@@ -291,6 +292,48 @@ async function main() {
   assert.strictEqual((await login(luis.codigo, '10.5.5.6')).status, 200); ok('al reactivarlo vuelve a funcionar');
   const del = await (await admin('/api/admin/codigos/' + vencido.id, { method: 'DELETE' })).json();
   assert.strictEqual(del.borrados, 1); ok('borrar un código');
+
+  // ------------------------------------------------------------ Origen de Socket.IO
+  console.log('Origen de las conexiones Socket.IO');
+  const conOrigen = (cab) => new Promise((resolve) => {
+    const so = io(BASE, { transports: ['websocket'], reconnection: false, extraHeaders: cab });
+    so.on('connect', () => resolve({ ok: true, s: so }));
+    so.on('connect_error', (e) => { so.close(); resolve({ ok: false, e }); });
+  });
+  let ro = await conOrigen({ Origin: 'https://sitio-ajeno.example' });
+  assert.strictEqual(ro.ok, false); ok('Origin de otro dominio → rechazada');
+  ro = await conOrigen({ Origin: BASE });
+  assert.strictEqual(ro.ok, true); ro.s.close(); ok('Origin propio (mismo Host) → aceptada');
+  ro = await conOrigen({ Origin: 'https://quest.ejemplo.es', 'X-Forwarded-Host': 'quest.ejemplo.es, otro.example' });
+  assert.strictEqual(ro.ok, true); ro.s.close(); ok('Origin igual al primer X-Forwarded-Host (tras el proxy) → aceptada');
+  ro = await conOrigen({ Origin: 'https://otro.example', 'X-Forwarded-Host': 'quest.ejemplo.es, otro.example' });
+  assert.strictEqual(ro.ok, false); ok('solo cuenta el primer X-Forwarded-Host → rechazada');
+  ro = await conOrigen({});
+  assert.strictEqual(ro.ok, true); ro.s.close(); ok('sin cabecera Origin (cliente que no es navegador) → aceptada');
+
+  // ------------------------------------------------------------ Límite de contraseñas erróneas en /admin
+  console.log('Límite de contraseñas erróneas en /admin');
+  const IPA = { 'X-Forwarded-For': '203.0.113.77' };
+  const mala = { Authorization: 'Basic ' + Buffer.from('x:mala').toString('base64'), ...IPA };
+  const buena = { Authorization: ADMIN, ...IPA };
+  for (let i = 0; i < 3; i++) assert.strictEqual((await fetch(BASE + '/admin', { headers: IPA })).status, 401);
+  ok('3 visitas sin credenciales (el navegador aún no ha enviado nada) → 401 y no cuentan');
+  for (let i = 1; i <= 5; i++) assert.strictEqual((await fetch(BASE + '/admin', { headers: mala })).status, 401, 'intento ' + i);
+  ok('5 contraseñas erróneas → 401 cada una');
+  const sexta = await fetch(BASE + '/admin', { headers: mala });
+  assert.strictEqual(sexta.status, 429);
+  assert.ok((await sexta.text()).includes('Demasiados intentos fallidos. Espera unos minutos.'));
+  ok('la sexta → 429');
+  assert.strictEqual((await fetch(BASE + '/admin', { headers: buena })).status, 429); ok('con la contraseña correcta sigue 429 mientras dure el bloqueo');
+  const apiA = await fetch(BASE + '/api/admin/codigos', { headers: buena });
+  assert.strictEqual(apiA.status, 429);
+  assert.strictEqual((await apiA.json()).error, 'demasiados_intentos'); ok('la API de códigos responde 429 con el código demasiados_intentos');
+  assert.strictEqual((await fetch(BASE + '/admin', { headers: { Authorization: ADMIN, 'X-Forwarded-For': '203.0.113.78' } })).status, 200); ok('otra IP con la contraseña correcta → 200');
+  const IPB = { 'X-Forwarded-For': '203.0.113.90' };
+  for (let i = 0; i < 4; i++) await fetch(BASE + '/admin', { headers: { Authorization: mala.Authorization, ...IPB } });
+  assert.strictEqual((await fetch(BASE + '/admin', { headers: { Authorization: ADMIN, ...IPB } })).status, 200);
+  for (let i = 0; i < 4; i++) assert.strictEqual((await fetch(BASE + '/admin', { headers: { Authorization: mala.Authorization, ...IPB } })).status, 401);
+  ok('acertar la contraseña reinicia el contador');
 
   console.log('\nTODAS LAS COMPROBACIONES CORRECTAS');
 }
