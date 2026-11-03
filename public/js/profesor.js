@@ -664,7 +664,7 @@ function pintarRanking(lista, claveTitulo, todos) {
   const ol = $('ranking');
   ol.replaceChildren();
   if (!lista || !lista.length) { ol.append(el('li', { class: 'ranking-vacio' }, T('p.sin_punt'))); return; }
-  for (const r of todos ? lista : lista.slice(0, 15)) {
+  for (const r of lista.slice(0, 10)) {
     ol.append(el('li', null,
       el('span', { class: 'pos' }, String(r.pos)),
       el('span', { class: 'nom' }, r.nombre, el('small', null, r.clase + (todos ? ' · ' + segundosFmt(r.tiempoMs) : ''))),

@@ -191,7 +191,7 @@ body.alumno {
 .alumno .pie { padding: 0.6rem 1rem 1rem; text-align: center; color: var(--tinta-suave); font-size: 0.9rem; }
 
 /* ============================== PROFESOR ============================== */
-body.profesor { min-height: 100vh; display: flex; flex-direction: column; }
+body.profesor { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 
 .profesor .cabecera {
   display: flex;
@@ -207,15 +207,15 @@ body.profesor { min-height: 100vh; display: flex; flex-direction: column; }
 .profesor .cabecera .pin-mini { font-weight: 800; letter-spacing: 0.1em; background: var(--fondo); padding: 0.3rem 0.8rem; border-radius: 8px; }
 
 .profesor .pagina { flex: 1; display: flex; min-height: 0; }
-.profesor .principal { flex: 1; display: flex; flex-direction: column; padding: 1.5rem 2rem; min-width: 0; }
+.profesor .principal { flex: 1; display: flex; flex-direction: column; padding: 1rem 1.6rem; min-width: 0; min-height: 0; overflow-y: auto; }
 .profesor .lateral {
-  width: clamp(280px, 26vw, 420px);
+  width: clamp(230px, 19vw, 320px);
   background: #fff;
   border-left: 2px solid var(--linea);
-  padding: 1.2rem 1.2rem 1.5rem;
+  padding: 0.8rem 0.9rem;
   overflow-y: auto;
 }
-.profesor .lateral h2 { margin: 0 0 0.8rem; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tinta-suave); }
+.profesor .lateral h2 { margin: 0 0 0.5rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tinta-suave); }
 
 .profesor .centrado { margin: auto; text-align: center; max-width: 900px; width: 100%; }
 .profesor .tarjeta {
@@ -263,53 +263,57 @@ body.profesor { min-height: 100vh; display: flex; flex-direction: column; }
 .chip button:hover { background: #fdecee; color: var(--mal); }
 
 /* Pregunta */
-.estado-pregunta { display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: var(--tinta-suave); margin-bottom: 0.8rem; font-size: 1.1rem; }
-.temporizador { font-size: 2.6rem; font-weight: 900; color: var(--acento); min-width: 3ch; text-align: right; }
+.estado-pregunta { display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: var(--tinta-suave); margin-bottom: 0.3rem; font-size: 1.1rem; flex: none; }
+.temporizador { font-size: clamp(2rem, 5vh, 3.4rem); line-height: 1; font-weight: 900; color: var(--acento); min-width: 3ch; text-align: right; }
 .temporizador.poco { color: var(--mal); }
-.pista-tiempo { height: 10px; background: var(--linea); border-radius: 99px; overflow: hidden; margin-bottom: 1.5rem; }
+.pista-tiempo { height: 10px; background: var(--linea); border-radius: 99px; overflow: hidden; margin-bottom: 0.6rem; flex: none; }
 .pista-tiempo > i { display: block; height: 100%; width: 100%; background: var(--acento); transform-origin: left; }
-.enunciado { font-size: clamp(1.6rem, 3.2vw, 3rem); font-weight: 800; line-height: 1.2; text-align: center; margin: 0.5rem 0 2rem; }
+.enunciado { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(1.8rem, 2.2vw + 3.6vh, 4.6rem); font-weight: 800; line-height: 1.2; text-align: center; margin: 0.4rem 0 0.8rem; overflow: auto; }
 
-.grid-opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: auto; }
+.grid-opciones { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 12px; flex: none; height: 44vh; height: 44dvh; }
 .grid-opciones .opcion-pro {
   color: #fff;
   border-radius: 14px;
-  padding: 1.1rem 1.4rem;
-  font-size: clamp(1.1rem, 2.2vw, 1.9rem);
+  padding: 0.6rem 1.4rem;
+  font-size: clamp(1.3rem, 1.3vw + 2.6vh, 3.2rem);
+  line-height: 1.15;
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 1rem;
-  min-height: 5.5rem;
+  min-height: 0;
+  overflow: hidden;
   position: relative;
   transition: opacity 0.3s, transform 0.3s;
 }
-.grid-opciones .opcion-pro .letra-pro { font-weight: 900; font-size: 1.4em; opacity: 0.85; min-width: 1.2em; }
+.grid-opciones .opcion-pro .letra-pro { font-weight: 900; font-size: 1.2em; opacity: 0.9; white-space: nowrap; flex: none; }
 .grid-opciones .opcion-pro .cuenta { margin-left: auto; font-size: 1.1em; background: rgba(0, 0, 0, 0.25); border-radius: 999px; padding: 0.1rem 0.8rem; }
 .grid-opciones .opcion-pro.apagada { opacity: 0.28; }
 .grid-opciones .opcion-pro.correcta { outline: 6px solid var(--ok); outline-offset: 3px; }
 .grid-opciones .opcion-pro .marca-ok { margin-left: 0.5rem; }
 .grid-opciones.una-sola-columna { grid-template-columns: 1fr; }
 
-.barra-acciones { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+.barra-acciones { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 0.8rem; flex: none; }
 .contador-resp { font-weight: 700; color: var(--tinta-suave); font-size: 1.1rem; }
 
 /* Ranking lateral */
 .ranking { list-style: none; margin: 0; padding: 0; counter-reset: pos; }
 .ranking li {
   display: grid;
-  grid-template-columns: 2.2rem 1fr auto;
+  grid-template-columns: 1.9rem 1fr auto;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.55rem 0.4rem;
+  padding: 0.4rem 0.3rem;
   border-bottom: 1px solid var(--linea);
   font-weight: 700;
+  font-size: 0.95rem;
 }
 .ranking li:nth-child(1) .pos { background: #f5c518; color: #4a3b00; }
 .ranking li:nth-child(2) .pos { background: #c9ced6; color: #333; }
 .ranking li:nth-child(3) .pos { background: #d9a066; color: #4a2c0a; }
 .ranking .pos { background: var(--fondo); border-radius: 50%; width: 2rem; height: 2rem; display: grid; place-items: center; font-size: 0.9rem; }
-.ranking .nom small { display: block; color: var(--tinta-suave); font-weight: 600; font-size: 0.78rem; }
+.ranking .nom { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ranking .nom small { display: block; color: var(--tinta-suave); font-weight: 600; font-size: 0.72rem; }
 .ranking .pts { font-variant-numeric: tabular-nums; }
 .ranking-vacio { color: var(--tinta-suave); }
 
@@ -322,6 +326,11 @@ body.profesor { min-height: 100vh; display: flex; flex-direction: column; }
 .podio .p1 { min-height: 210px; background: #fff7d1; }
 .podio .p2 { min-height: 170px; }
 .podio .p3 { min-height: 140px; }
+
+@media (max-height: 700px) {
+  .ranking li { padding: 0.25rem 0.3rem; }
+  .ranking .nom small { display: none; }
+}
 
 @media (max-width: 900px) {
   .profesor .pagina { flex-direction: column; }
