@@ -12,6 +12,7 @@ const assert = require('assert');
 const PORT = 3121;
 const BASE = `http://127.0.0.1:${PORT}`;
 const CLAVE = 'clave-admin-de-prueba';
+const TOKEN_API = 'token-api-de-prueba-0123456789abcdef';
 const ADMIN = 'Basic ' + Buffer.from('admin:' + CLAVE).toString('base64');
 
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -30,7 +31,7 @@ async function arrancar() {
   servidor = spawn('node', ['server.js'], {
     cwd: path.join(__dirname, '..'),
     env: {
-      ...process.env, PORT: String(PORT), DATA_DIR: dataDir, ADMIN_PASSWORD: CLAVE,
+      ...process.env, PORT: String(PORT), DATA_DIR: dataDir, ADMIN_PASSWORD: CLAVE, ADMIN_API_TOKEN: TOKEN_API,
       CONTACT_URL: 'https://example.org/contacto',
       MAX_PREGUNTAS: '5', MAX_JUGADORES: '4', MAX_PARTIDAS_POR_CODIGO: '2', MAX_PARTIDAS_TOTAL: '40',
     },
@@ -79,6 +80,36 @@ async function main() {
   assert.strictEqual((await fetch(BASE + '/admin')).status, 401); ok('/admin sin contraseña → 401');
   assert.strictEqual((await admin('/admin')).status, 200); ok('/admin con contraseña → 200');
   assert.strictEqual((await fetch(BASE + '/api/admin/codigos')).status, 401); ok('API de códigos sin contraseña → 401');
+  // token de API (solo para la API de códigos)
+  const IPT = { 'X-Forwarded-For': '198.51.100.7' };
+  const bearer = (t) => ({ Authorization: 'Bearer ' + t, ...IPT });
+  assert.strictEqual((await fetch(BASE + '/api/admin/codigos', { headers: bearer(TOKEN_API) })).status, 200); ok('token de API correcto → lista de códigos');
+  assert.strictEqual((await fetch(BASE + '/api/admin/codigos', { headers: bearer(TOKEN_API + 'x') })).status, 401); ok('token de API incorrecto → 401');
+  assert.strictEqual((await fetch(BASE + '/api/admin/codigos', { headers: bearer('') })).status, 401); ok('Bearer vacío → 401');
+  assert.strictEqual((await fetch(BASE + '/admin', { headers: bearer(TOKEN_API) })).status, 401); ok('el token no vale fuera de la API de códigos (/admin)');
+  assert.strictEqual((await fetch(BASE + '/api/admin/estado', { headers: bearer(TOKEN_API) })).status, 401); ok('el token no vale en /api/admin/estado');
+  const tc = await fetch(BASE + '/api/admin/codigos', { method: 'POST', headers: { ...bearer(TOKEN_API), 'Content-Type': 'application/json' }, body: JSON.stringify({ etiqueta: 'Por token' }) });
+  assert.strictEqual(tc.status, 200); const tcj = await tc.json();
+  assert.strictEqual((await fetch(BASE + '/api/admin/codigos/' + tcj.id, { method: 'PATCH', headers: { ...bearer(TOKEN_API), 'Content-Type': 'application/json' }, body: JSON.stringify({ revocado: true }) })).status, 200);
+  assert.strictEqual((await fetch(BASE + '/api/admin/codigos/' + tcj.id, { method: 'DELETE', headers: bearer(TOKEN_API) })).status, 200); ok('crear, revocar y borrar con token de API');
+  assert.strictEqual((await fetch(BASE + '/api/admin/codigos', { headers: { Authorization: ADMIN, ...IPT } })).status, 200); ok('la contraseña de siempre sigue funcionando');
+  for (let i = 0; i < 5; i++) await fetch(BASE + '/api/admin/codigos', { headers: bearer('malo' + i) });
+  assert.strictEqual((await fetch(BASE + '/api/admin/codigos', { headers: bearer(TOKEN_API) })).status, 429); ok('el token comparte el límite de intentos erróneos (429)');
+  // sin variable o con token corto, la vía queda desactivada
+  for (const [tok, que] of [[undefined, 'sin ADMIN_API_TOKEN'], ['corto-123', 'con ADMIN_API_TOKEN de menos de 24 caracteres']]) {
+    const env2 = { ...process.env, PORT: String(PORT + 1), DATA_DIR: path.join(tmp, 'data2'), ADMIN_PASSWORD: CLAVE };
+    delete env2.ADMIN_API_TOKEN; if (tok) env2.ADMIN_API_TOKEN = tok;
+    const s2 = spawn('node', ['server.js'], { cwd: path.join(__dirname, '..'), env: env2, stdio: ['ignore', 'pipe', 'pipe'] });
+    let log2 = ''; s2.stdout.on('data', (d) => { log2 += d; }); s2.stderr.on('data', (d) => { log2 += d; });
+    try {
+      await esperarHasta(() => log2.includes('Servidor iniciado'), 10000, 'arranque 2');
+      const b2 = 'http://127.0.0.1:' + (PORT + 1);
+      assert.strictEqual((await fetch(b2 + '/api/admin/codigos', { headers: { Authorization: 'Bearer ' + (tok || TOKEN_API) } })).status, 401, que);
+      assert.strictEqual((await fetch(b2 + '/api/admin/codigos', { headers: { Authorization: ADMIN } })).status, 200);
+      assert.ok(!log2.includes(tok || TOKEN_API));
+    } finally { s2.kill(); await dormir(300); }
+    ok('vía de token desactivada ' + que + ' (la contraseña sigue valiendo)');
+  }
   assert.strictEqual((await fetch(BASE + '/views/admin.html')).status, 404); ok('views/ no se sirve en abierto');
   assert.strictEqual((await fetch(BASE + '/profesor')).status, 200); ok('/profesor (pantalla de acceso) es pública');
   assert.strictEqual((await fetch(BASE + '/ayuda')).status, 200); ok('/ayuda es pública');

@@ -224,6 +224,19 @@ function requiereClaveAdmin(req, res, next) {
   res.status(401).send('Se requiere contraseña / Es requereix contrasenya');
 }
 
+// Token de API opcional (solo para la API de codigos de invitacion): Authorization: Bearer <ADMIN_API_TOKEN>.
+// Desactivado si la variable no existe o tiene menos de 24 caracteres. Comparte el limite de intentos de la contrasena.
+const ADMIN_API_TOKEN = (process.env.ADMIN_API_TOKEN || '').length >= 24 ? process.env.ADMIN_API_TOKEN : '';
+function requiereClaveAdminOToken(req, res, next) {
+  const cab = req.headers.authorization || '';
+  if (!ADMIN_API_TOKEN || !/^Bearer /i.test(cab)) return requiereClaveAdmin(req, res, next);
+  const ip = ipDeCabecera(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+  if (limAdmin.bloqueado(ip)) return res.status(429).json({ error: 'demasiados_intentos' });
+  if (iguales(cab.slice(7).trim(), ADMIN_API_TOKEN)) { limAdmin.exito(ip); return next(); }
+  limAdmin.fallo(ip);
+  res.status(401).json({ error: 'token' });
+}
+
 function requiereSesion(req, res, next) {
   const h = req.headers.authorization || '';
   const s = h.startsWith('Bearer ') ? sesionPorToken(h.slice(7)) : null;
@@ -300,11 +313,11 @@ function filaPublica(f) {
   };
 }
 
-app.get('/api/admin/codigos', requiereClaveAdmin, (req, res) => {
+app.get('/api/admin/codigos', requiereClaveAdminOToken, (req, res) => {
   res.json(db.prepare('SELECT * FROM codigos ORDER BY id DESC').all().map(filaPublica));
 });
 
-app.post('/api/admin/codigos', requiereClaveAdmin, express.json({ limit: '2kb' }), (req, res) => {
+app.post('/api/admin/codigos', requiereClaveAdminOToken, express.json({ limit: '2kb' }), (req, res) => {
   const etiqueta = limpiarTexto(req.body && req.body.etiqueta, 60);
   if (!etiqueta) return res.status(400).json({ error: 'falta_etiqueta' });
   let caduca = req.body && req.body.caduca ? String(req.body.caduca) : null;
@@ -323,7 +336,7 @@ app.post('/api/admin/codigos', requiereClaveAdmin, express.json({ limit: '2kb' }
   res.status(500).json({ error: 'no_codigo_unico' });
 });
 
-app.patch('/api/admin/codigos/:id', requiereClaveAdmin, express.json({ limit: '2kb' }), (req, res) => {
+app.patch('/api/admin/codigos/:id', requiereClaveAdminOToken, express.json({ limit: '2kb' }), (req, res) => {
   const id = parseInt(req.params.id, 10) || 0;
   const fila = db.prepare('SELECT * FROM codigos WHERE id = ?').get(id);
   if (!fila) return res.status(404).json({ error: 'no_existe_codigo' });
@@ -339,7 +352,7 @@ app.patch('/api/admin/codigos/:id', requiereClaveAdmin, express.json({ limit: '2
   res.json(filaPublica(db.prepare('SELECT * FROM codigos WHERE id = ?').get(id)));
 });
 
-app.delete('/api/admin/codigos/:id', requiereClaveAdmin, (req, res) => {
+app.delete('/api/admin/codigos/:id', requiereClaveAdminOToken, (req, res) => {
   const id = parseInt(req.params.id, 10) || 0;
   cerrarPartidasDe(id, 'revocado');
   const r = db.prepare('DELETE FROM codigos WHERE id = ?').run(id);
