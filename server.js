@@ -209,8 +209,30 @@ app.use((req, res, next) => {
   next();
 });
 
+// Sesion de administrador por cookie (la abre el acceso unico de Control). Convive con la contrasena HTTP basica de siempre.
+const ADMIN_SESION_MS = 12 * 3600 * 1000;
+const adminSesiones = new Map(); // token -> caduca
+function adminLeerCookie(req, nombre) {
+  const c = req.headers.cookie || '';
+  for (const parte of c.split(';')) { const k = parte.indexOf('='); if (k > 0 && parte.slice(0, k).trim() === nombre) return decodeURIComponent(parte.slice(k + 1).trim()); }
+  return '';
+}
+function adminSesionValida(req) {
+  const t = adminLeerCookie(req, 'asid');
+  if (!t) return false;
+  const exp = adminSesiones.get(t);
+  if (!exp) return false;
+  if (exp < Date.now()) { adminSesiones.delete(t); return false; }
+  return true;
+}
+setInterval(() => { const ahora = Date.now(); for (const [t, e] of adminSesiones) if (e < ahora) adminSesiones.delete(t); }, 3600 * 1000).unref();
+function adminCookieSesion(req, valor, maxAgeSeg) {
+  const https = (req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https' || req.secure;
+  return `asid=${valor}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeg}` + (https ? '; Secure' : '');
+}
 function requiereClaveAdmin(req, res, next) {
   const ip = ipDeCabecera(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+  if (adminSesionValida(req)) return next();
   if (limAdmin.bloqueado(ip)) {
     if (req.path.startsWith('/api/')) return res.status(429).json({ error: 'demasiados_intentos' });
     return res.status(429).type('text/plain; charset=utf-8').send('Demasiados intentos fallidos. Espera unos minutos. / Massa intents fallits. Espera uns minuts.');
@@ -225,6 +247,23 @@ function requiereClaveAdmin(req, res, next) {
   res.setHeader('WWW-Authenticate', 'Basic realm="Quest (administrador)", charset="UTF-8"');
   res.status(401).send('Se requiere contraseña / Es requereix contrasenya');
 }
+
+// Acceso unico desde Control (panel de control de las aplicaciones): enlace firmado de un solo uso (control-sso.js, copia de Control/lib/sso-agent.js).
+// Solo existe si CONTROL_SSO_SECRET esta definido; abre una sesion de administrador. La contrasena sigue funcionando igual.
+const CONTROL_SSO = require('./control-sso').createVerifier(process.env.CONTROL_SSO_SECRET || '');
+app.get('/api/control/sso', (req, res) => {
+  if (!process.env.CONTROL_SSO_SECRET) return res.status(404).json({ error: 'notfound' });
+  const ip = ipDeCabecera(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+  if (limAdmin.bloqueado(ip)) return res.status(429).json({ error: 'demasiados_intentos' });
+  const r = CONTROL_SSO(String(req.query.t || ''));
+  if (!r.ok) { limAdmin.fallo(ip); return res.status(403).json({ error: 'sso' }); }
+  limAdmin.exito(ip);
+  const t = crypto.randomBytes(24).toString('hex');
+  adminSesiones.set(t, Date.now() + ADMIN_SESION_MS);
+  res.setHeader('Set-Cookie', adminCookieSesion(req, t, ADMIN_SESION_MS / 1000));
+  res.setHeader('Cache-Control', 'no-store');
+  res.redirect('/admin');
+});
 
 // Token de API opcional (solo para la API de codigos de invitacion): Authorization: Bearer <ADMIN_API_TOKEN>.
 // Desactivado si la variable no existe o tiene menos de 24 caracteres. Comparte el limite de intentos de la contrasena.

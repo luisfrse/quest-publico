@@ -5,11 +5,12 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/servidor.js && node test/navegador.js && node test/idioma.js && node test/i18n.js",
+    "test": "node test/servidor.js && node test/navegador.js && node test/idioma.js && node test/i18n.js && node test/control-sso.js",
     "test:servidor": "node test/servidor.js",
     "test:navegador": "node test/navegador.js",
     "test:i18n": "node test/i18n.js",
-    "test:idioma": "node test/idioma.js"
+    "test:idioma": "node test/idioma.js",
+    "test:control-sso": "node test/control-sso.js"
   },
   "engines": {
     "node": ">=22"
