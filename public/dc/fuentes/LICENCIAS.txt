@@ -1,0 +1,8 @@
+Tipografías incluidas (subconjuntos latin y latin-ext descargados de Google Fonts, sin modificar los glifos)
+
+- Bricolage Grotesque — Copyright 2022 The Bricolage Grotesque Project Authors (https://github.com/ateliertriay/bricolage).
+- Source Sans 3 — Copyright 2010-2023 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+
+Ambas bajo la SIL Open Font License, Version 1.1 (https://openfontlicense.org): se pueden usar, estudiar, copiar y
+redistribuir, también en software comercial, siempre que no se vendan por separado y se conserve este aviso.
+Son las mismas que ya sirve en local la app Precios (precios/public/fonts).

@@ -3,74 +3,92 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#46178f">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0d1a2a">
   <title data-i18n-doc="a.doc">Quest</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/dc/fuentes/fuentes.css">
+  <link rel="stylesheet" href="/dc/tokens.css">
+  <link rel="stylesheet" href="/dc/base.css">
   <link rel="stylesheet" href="/quest.css">
 </head>
-<body class="alumno">
+<body class="dc-body alumno">
+
+  <header class="dc-header q-cab">
+    <a class="dc-brand" href="/"><span class="dc-brand__tile"><span class="dc-icon" data-icon="flag" aria-hidden="true"></span></span><span>Quest</span></a>
+    <div class="dc-header__actions"><span data-lang-slot></span></div>
+  </header>
 
   <!-- Entrada -->
-  <main class="centro" id="v-entrada">
-    <div class="panel">
-      <h1 class="logo">Quest</h1>
-      <p class="error" id="error" hidden></p>
-      <form id="form-entrada" autocomplete="off">
-        <label class="campo"><span data-i18n="a.codigo_partida"></span>
-          <input id="in-pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" required>
-        </label>
-        <label class="campo"><span data-i18n="a.tu_nombre"></span>
-          <input id="in-nombre" maxlength="24" data-i18n-ph="a.nombre_ph" required>
-        </label>
-        <label class="campo"><span data-i18n="a.tu_clase"></span>
-          <input id="in-clase" maxlength="16" data-i18n-ph="a.clase_ph" required>
-        </label>
-        <button class="btn grande" type="submit" id="btn-entrar" data-i18n="a.entrar"></button>
+  <main class="q-vista" id="v-entrada">
+    <div class="dc-card q-panel">
+      <h1 data-i18n="a.entra_titulo"></h1>
+      <p class="q-error" id="error" role="alert" hidden></p>
+      <form id="form-entrada" class="dc-form" autocomplete="off">
+        <div class="dc-field">
+          <label class="dc-label" for="in-pin" data-i18n="a.codigo_partida"></label>
+          <input class="dc-input" id="in-pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="off" required>
+        </div>
+        <div class="dc-field">
+          <label class="dc-label" for="in-nombre" data-i18n="a.tu_nombre"></label>
+          <input class="dc-input" id="in-nombre" maxlength="24" data-i18n-ph="a.nombre_ph" autocomplete="off" required>
+        </div>
+        <div class="dc-field">
+          <label class="dc-label" for="in-clase" data-i18n="a.tu_clase"></label>
+          <input class="dc-input" id="in-clase" maxlength="16" data-i18n-ph="a.clase_ph" autocomplete="off" required>
+        </div>
+        <button class="dc-btn dc-btn--primary dc-btn--lg dc-btn--block" type="submit" id="btn-entrar" data-i18n="a.entrar"></button>
       </form>
       <p class="enlace-pie"><a href="/profesor" data-i18n="a.soy_profe"></a></p>
     </div>
   </main>
 
   <!-- Sala de espera -->
-  <main class="centro" id="v-lobby" hidden>
-    <div class="logo" style="font-size:2.4rem">Quest</div>
-    <p class="mensaje-grande" id="lobby-msg"></p>
-    <p class="mensaje-suave" data-i18n="a.mira_pantalla"></p>
+  <main class="q-vista" id="v-lobby" hidden>
+    <div class="q-gran-icono q-gran-icono--espera"><span class="dc-icon" data-icon="hourglass" aria-hidden="true"></span></div>
+    <p class="q-grande" id="lobby-msg"></p>
+    <p class="q-suave" data-i18n="a.mira_pantalla"></p>
   </main>
 
   <!-- Pregunta -->
-  <section class="juego" id="v-pregunta" hidden>
-    <div class="barra"><span id="p-num"></span><span id="p-tiempo"></span></div>
-    <div class="tiempo-pista"><i id="p-barra"></i></div>
+  <section class="q-vista" id="v-pregunta" hidden>
+    <div class="q-topbar"><span id="p-num"></span><div id="p-anillo"></div></div>
+    <div class="q-pista"><i id="p-barra"></i></div>
     <div class="opciones" id="p-opciones"></div>
-    <div class="pie" data-i18n="a.pie_toca"></div>
+    <p class="q-pie" data-i18n="a.pie_toca"></p>
   </section>
 
   <!-- Respuesta enviada -->
-  <section class="pantalla-color neutro" id="v-enviada" hidden>
-    <div class="icono">✓</div>
-    <p class="mensaje-grande" data-i18n="a.enviada"></p>
-    <p data-i18n="a.espera_resto"></p>
+  <section class="q-vista q-pantalla neutro" id="v-enviada" hidden>
+    <div class="icono" id="e-icono"><span class="dc-icon" data-icon="check-circle" aria-hidden="true"></span></div>
+    <p class="q-grande" data-i18n="a.enviada"></p>
+    <p class="q-suave" data-i18n="a.espera_resto"></p>
   </section>
 
   <!-- Resultado de la pregunta -->
-  <section class="pantalla-color" id="v-resultado" hidden>
+  <section class="q-vista q-pantalla" id="v-resultado" hidden>
     <div class="icono" id="r-icono"></div>
-    <p class="mensaje-grande" id="r-titulo"></p>
-    <p id="r-detalle"></p>
-    <p id="r-pos" style="font-weight:700"></p>
+    <p class="q-grande" id="r-titulo"></p>
+    <p class="q-suave" id="r-detalle"></p>
+    <p class="q-datos" id="r-pos"></p>
   </section>
 
   <!-- Final -->
-  <main class="centro" id="v-final" hidden>
-    <div class="logo" style="font-size:2.4rem">Quest</div>
-    <p class="mensaje-grande" data-i18n="a.fin"></p>
-    <p class="mensaje-grande" id="f-pos"></p>
-    <p class="mensaje-suave" id="f-pts"></p>
-    <button class="btn" id="btn-otra" style="margin-top:1.5rem" data-i18n="a.salir"></button>
+  <main class="q-vista" id="v-final" hidden>
+    <div class="q-medalla"><span class="dc-icon" data-icon="trophy" aria-hidden="true"></span></div>
+    <p class="q-grande" data-i18n="a.fin"></p>
+    <p class="q-grande" id="f-pos"></p>
+    <p class="q-datos"><span class="q-dato" id="f-pts"></span></p>
+    <button class="dc-btn dc-btn--primary dc-btn--lg" id="btn-otra" type="button" data-i18n="a.salir"></button>
   </main>
 
+  <script src="/dc/iconos/iconos.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/i18n.js"></script>
+  <script src="/js/ui.js"></script>
   <script src="/js/alumno.js"></script>
 </body>
 </html>

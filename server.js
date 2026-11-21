@@ -203,7 +203,7 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; " +
+    "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: blob:; object-src 'none'; manifest-src 'self'; " +
     "connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
   );
   next();
@@ -235,6 +235,7 @@ function requiereClaveAdmin(req, res, next) {
   if (adminSesionValida(req)) return next();
   if (limAdmin.bloqueado(ip)) {
     if (req.path.startsWith('/api/')) return res.status(429).json({ error: 'demasiados_intentos' });
+    if (req.method === 'GET' && (req.headers.accept || '').includes('text/html')) return res.status(429).sendFile(path.join(PUBLIC, 'acceso-bloqueado.html'));
     return res.status(429).type('text/plain; charset=utf-8').send('Demasiados intentos fallidos. Espera unos minutos. / Massa intents fallits. Espera uns minuts.');
   }
   const cabecera = req.headers.authorization || '';
@@ -245,6 +246,7 @@ function requiereClaveAdmin(req, res, next) {
     limAdmin.fallo(ip); // solo cuenta si llegó una contraseña errónea; la primera visita sin credenciales no
   }
   res.setHeader('WWW-Authenticate', 'Basic realm="Quest (administrador)", charset="UTF-8"');
+  if (req.method === 'GET' && !req.path.startsWith('/api/') && (req.headers.accept || '').includes('text/html')) return res.status(401).sendFile(path.join(PUBLIC, 'acceso-requerido.html'));
   res.status(401).send('Se requiere contraseña / Es requereix contrasenya');
 }
 

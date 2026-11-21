@@ -1,0 +1,188 @@
+/* diseno-comun · tokens.css — variables de diseño comunes (web de Luis, Campus y todas las apps).
+   Claro por defecto; oscuro con prefers-color-scheme o forzado con <html data-theme="dark"> (y <html data-theme="light"> fuerza el claro).
+   Las dos copias del bloque oscuro deben ser idénticas: `node tools/contraste.js` lo comprueba y valida el contraste AA.
+   Todo lleva el prefijo --dc- para poder importarlo en una app antigua sin pisar sus variables. */
+
+:root {
+  /* ---- marca (los mismos valores que web-luis/css/style.css y campus/public/style.css) ---- */
+  --dc-night: #0d1a2a;       /* azul noche: cabecera, portada, fondo oscuro */
+  --dc-deep: #1c3a5c;
+  --dc-sea: #3b6ea5;
+  --dc-lilac: #b08be0;       /* acento de marca */
+  --dc-violet: #5a2d86;      /* acento sobre claro (texto/botón): 10,5:1 con blanco */
+  --dc-violet-hover: #431f66;
+  --dc-plum: #36005a;        /* banda de redes de la web */
+
+  /* ---- superficies y texto (claro) ---- */
+  --dc-bg: #f5f4f8;
+  --dc-surface: #ffffff;
+  --dc-surface-2: #f4f1fa;
+  --dc-surface-3: #ebe4f7;
+  --dc-border: #e1dfe8;            /* separadores decorativos */
+  --dc-border-strong: #7e7a90;     /* bordes de campos y controles: ≥ 3:1 sobre blanco y sobre --dc-bg */
+  --dc-text: #14212b;
+  --dc-text-soft: #4a5b68;
+  --dc-link: #2f5f93;
+
+  /* ---- acción principal ---- */
+  --dc-primary: #5a2d86;
+  --dc-primary-hover: #431f66;
+  --dc-on-primary: #ffffff;
+  --dc-focus: #5a2d86;
+  --dc-selected: #ebe4f7;          /* fila / opción seleccionada */
+
+  /* ---- semánticos (texto sobre su fondo suave ≥ 4,5:1) ---- */
+  --dc-ok: #15764a;   --dc-ok-bg: #e3f4ea;   --dc-ok-border: #9ed3b6;
+  --dc-warn: #8a5a00; --dc-warn-bg: #fdf1d6; --dc-warn-border: #e3c168;
+  --dc-danger: #b3261e; --dc-danger-bg: #fbe9e7; --dc-danger-border: #eaa7a1;
+  --dc-info: #2f5f93; --dc-info-bg: #e6eef8; --dc-info-border: #a7c1e0;
+
+  /* ---- cabecera y portada (siempre azul noche, también en claro: es la firma de la web y del Campus) ---- */
+  --dc-header-bg: #0d1a2a;
+  --dc-header-text: #ffffff;
+  --dc-header-soft: #c9d6e6;
+  --dc-header-focus: #c9aef0;
+  --dc-hero-from: #0d1a2a;
+  --dc-hero-to: #1c3a5c;
+
+  /* ---- color de la app (solo para su pastilla, icono PWA y detalles; cada app define el suyo) ---- */
+  --dc-app: #b08be0;
+  --dc-app-ink: #0d1a2a;
+
+  /* ---- sombras (teñidas de azul noche) ---- */
+  --dc-shadow-1: 0 1px 2px rgba(13, 26, 42, .06), 0 4px 14px rgba(13, 26, 42, .05);
+  --dc-shadow-2: 0 1px 2px rgba(13, 26, 42, .06), 0 10px 28px rgba(13, 26, 42, .09);
+  --dc-shadow-3: 0 18px 44px rgba(13, 26, 42, .22);
+  --dc-scrim: rgba(13, 26, 42, .55);
+
+  /* ---- tipografía ---- */
+  --dc-font-head: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --dc-font-body: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --dc-font-mono: ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+  /* escala (razón ≈ 1,2). Los títulos grandes usan clamp(): sin saltos entre móvil y escritorio. */
+  --dc-fs-xs: .8125rem;     /* 13 px: solo notas al pie y etiquetas de chips */
+  --dc-fs-sm: .9375rem;     /* 15 px */
+  --dc-fs-base: 1.0625rem;  /* 17 px: texto corrido (la web usa 17,6) */
+  --dc-fs-md: 1.25rem;      /* 20 px */
+  --dc-fs-lg: 1.5rem;       /* 24 px */
+  --dc-fs-xl: clamp(1.75rem, 1.4rem + 1.4vw, 2.25rem);   /* 28–36 */
+  --dc-fs-2xl: clamp(2.1rem, 1.6rem + 2.4vw, 3.1rem);    /* 34–50 */
+  --dc-lh-tight: 1.15;
+  --dc-lh-snug: 1.3;
+  --dc-lh-body: 1.55;
+  --dc-fw-regular: 400;
+  --dc-fw-medium: 500;
+  --dc-fw-semibold: 600;
+  --dc-fw-bold: 700;
+  --dc-tracking-head: -.015em;
+
+  /* ---- espaciado (base 4 px) ---- */
+  --dc-s-1: .25rem;  /* 4 */
+  --dc-s-2: .5rem;   /* 8 */
+  --dc-s-3: .75rem;  /* 12 */
+  --dc-s-4: 1rem;    /* 16 */
+  --dc-s-5: 1.25rem; /* 20 */
+  --dc-s-6: 1.5rem;  /* 24 */
+  --dc-s-7: 2rem;    /* 32 */
+  --dc-s-8: 2.5rem;  /* 40 */
+  --dc-s-9: 3.5rem;  /* 56 */
+  --dc-s-10: 4.5rem; /* 72 */
+  --dc-gutter: 1rem;           /* margen lateral en móvil */
+  --dc-maxw: 70rem;            /* 1120 px, como la web */
+  --dc-maxw-text: 42rem;       /* ≈ 70 caracteres */
+
+  /* ---- radios (jerarquía: lo pequeño es más recto) ---- */
+  --dc-r-xs: 6px;    /* etiquetas, teclas pequeñas */
+  --dc-r-sm: 10px;   /* chips cuadrados, avisos compactos */
+  --dc-r-md: 12px;   /* campos y botones (como el Campus) */
+  --dc-r-lg: 16px;   /* tarjetas */
+  --dc-r-xl: 24px;   /* hojas, modales, hero */
+  --dc-r-pill: 999px;
+
+  /* ---- medidas de interfaz ---- */
+  --dc-tap: 2.75rem;           /* 44 px: objetivo táctil mínimo */
+  --dc-tap-lg: 3.25rem;        /* 52 px: acción principal */
+  --dc-header-h: 3.75rem;
+  --dc-nav-h: 4rem;            /* navegación inferior móvil */
+  --dc-rail-w: 15rem;          /* navegación lateral en escritorio */
+  --dc-focus-w: 3px;
+  --dc-focus-offset: 2px;
+
+  /* ---- movimiento ---- */
+  --dc-dur: 160ms;
+  --dc-ease: cubic-bezier(.2, .7, .2, 1);
+
+  /* ---- capas ---- */
+  --dc-z-base: 1;
+  --dc-z-sticky: 10;
+  --dc-z-header: 20;
+  --dc-z-nav: 30;
+  --dc-z-dropdown: 40;
+  --dc-z-overlay: 50;
+  --dc-z-modal: 60;
+  --dc-z-toast: 70;
+  --dc-z-max: 100;
+
+  color-scheme: light;
+}
+
+/* ---- oscuro automático (copia A) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --dc-bg: #0d1a2a;
+    --dc-surface: #14263d;
+    --dc-surface-2: #1b3150;
+    --dc-surface-3: #243c5e;
+    --dc-border: #2f4866;
+    --dc-border-strong: #7a90ad;
+    --dc-text: #e9eef5;
+    --dc-text-soft: #aebdce;
+    --dc-link: #8fb4e3;
+    --dc-primary: #b08be0;
+    --dc-primary-hover: #c4a6ec;
+    --dc-on-primary: #0d1a2a;
+    --dc-focus: #c9aef0;
+    --dc-selected: #243c5e;
+    --dc-ok: #86dba2;     --dc-ok-bg: #15321f;     --dc-ok-border: #2f6b47;
+    --dc-warn: #f0d86a;   --dc-warn-bg: #353010;   --dc-warn-border: #7a6a1c;
+    --dc-danger: #ff9c9c; --dc-danger-bg: #3d1717; --dc-danger-border: #8a3535;
+    --dc-info: #8fb4e3;   --dc-info-bg: #17304d;   --dc-info-border: #2f5a8c;
+    --dc-shadow-1: none;
+    --dc-shadow-2: 0 10px 30px rgba(0, 0, 0, .35);
+    --dc-shadow-3: 0 18px 44px rgba(0, 0, 0, .5);
+    --dc-scrim: rgba(0, 0, 0, .65);
+    color-scheme: dark;
+  }
+}
+
+/* ---- oscuro forzado (copia B, idéntica a la A) ---- */
+:root[data-theme="dark"] {
+  --dc-bg: #0d1a2a;
+  --dc-surface: #14263d;
+  --dc-surface-2: #1b3150;
+  --dc-surface-3: #243c5e;
+  --dc-border: #2f4866;
+  --dc-border-strong: #7a90ad;
+  --dc-text: #e9eef5;
+  --dc-text-soft: #aebdce;
+  --dc-link: #8fb4e3;
+  --dc-primary: #b08be0;
+  --dc-primary-hover: #c4a6ec;
+  --dc-on-primary: #0d1a2a;
+  --dc-focus: #c9aef0;
+  --dc-selected: #243c5e;
+  --dc-ok: #86dba2;     --dc-ok-bg: #15321f;     --dc-ok-border: #2f6b47;
+  --dc-warn: #f0d86a;   --dc-warn-bg: #353010;   --dc-warn-border: #7a6a1c;
+  --dc-danger: #ff9c9c; --dc-danger-bg: #3d1717; --dc-danger-border: #8a3535;
+  --dc-info: #8fb4e3;   --dc-info-bg: #17304d;   --dc-info-border: #2f5a8c;
+  --dc-shadow-1: none;
+  --dc-shadow-2: 0 10px 30px rgba(0, 0, 0, .35);
+  --dc-shadow-3: 0 18px 44px rgba(0, 0, 0, .5);
+  --dc-scrim: rgba(0, 0, 0, .65);
+  color-scheme: dark;
+}
+
+/* ---- más contraste a petición del sistema ---- */
+@media (prefers-contrast: more) {
+  :root { --dc-border: var(--dc-border-strong); --dc-text-soft: var(--dc-text); }
+}

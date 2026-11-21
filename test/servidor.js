@@ -370,7 +370,7 @@ async function main() {
 }
 
 main()
-  .then(() => { servidor.kill(); fs.rmSync(tmp, { recursive: true, force: true }); process.exit(0); })
+  .then(() => { servidor.kill(); try { fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }); } catch (e) { /* Windows: se limpiará sola */ } process.exit(0); })
   .catch((e) => {
     console.error('\nFALLO:', e);
     if (servidor) servidor.kill();

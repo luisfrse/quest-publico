@@ -4,24 +4,30 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n-doc="ay.doc">Quest · Guia per a professors</title>
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0d1a2a">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="/dc/fuentes/fuentes.css">
+  <link rel="stylesheet" href="/dc/tokens.css">
+  <link rel="stylesheet" href="/dc/base.css">
   <link rel="stylesheet" href="/quest.css">
-  <style>
-    @media print { html, body { background: #fff !important; } .selector-flotante { display: none !important; } }
-    html[lang="ca"] .ayuda-es, html[lang="es"] .ayuda-ca { display: none; }
-  </style>
 </head>
-<body>
+<body class="dc-body">
+<header class="dc-header q-cab">
+  <a class="dc-brand" href="/profesor"><span class="dc-brand__tile"><span class="dc-icon" data-icon="flag" aria-hidden="true"></span></span><span>Quest</span></a>
+  <div class="dc-header__actions"><span data-lang-slot></span></div>
+</header>
 <main class="ayuda">
-  <div class="logo" style="font-size:1.4rem">Quest</div>
 <div class="ayuda-ca" lang="ca">
   <h1>Guia ràpida per a professors</h1>
   <p>Quest és una aplicació de qüestionaris en temps real, a l'estil de Kahoot: tu projectes les preguntes a classe i els alumnes responen des del mòbil tocant un dels quatre botons de colors.</p>
 
   <div class="barra-descarga">
-    <a class="btn" data-pdf="ca" href="/Guia-Quest-ca.pdf" download>Descarrega aquesta guia (PDF)</a>
-    <a class="btn secundario" href="/plantillas/Plantilla-Quest.xlsx" download>Plantilla Excel</a>
-    <a class="btn secundario" href="/plantillas/Plantilla-Quest.csv" download>Plantilla CSV</a>
-    <a class="btn secundario" href="/profesor">Entra com a professor</a>
+    <a class="dc-btn dc-btn--primary" data-pdf="ca" href="/Guia-Quest-ca.pdf" download>Descarrega aquesta guia (PDF)</a>
+    <a class="dc-btn dc-btn--secondary" href="/plantillas/Plantilla-Quest.xlsx" download>Plantilla Excel</a>
+    <a class="dc-btn dc-btn--secondary" href="/plantillas/Plantilla-Quest.csv" download>Plantilla CSV</a>
+    <a class="dc-btn dc-btn--secondary" href="/profesor">Entra com a professor</a>
   </div>
 
   <h2>1. Abans de començar</h2>
@@ -67,7 +73,7 @@
     <li>A cada pregunta corre el temps. La resposta correcta es mostra quan s'acaba el temps, quan han respost tots o quan prems <strong>Mostra la resposta</strong>. Després, <strong>Següent</strong> (també serveixen la barra espaiadora i la fletxa →).</li>
     <li>El rànquing apareix en un lateral de la pantalla i s'actualitza en mostrar cada resposta.</li>
   </ol>
-  <div class="destacado">
+  <div class="dc-alert destacado">
     <strong>Puntuació.</strong> Cada encert val 1 punt; fallar o no respondre en val 0. La rapidesa no dona punts extra: el temps de resposta dels encerts només se suma per <strong>desempatar</strong> (queda per davant qui triga menys).
   </div>
   <ul>
@@ -78,7 +84,7 @@
 
   <h2>5. Resultats</h2>
   <p>En acabar, prem <strong>Descarrega les notes (CSV)</strong>. El fitxer porta data, nom, classe, qüestionari, errors, puntuació total i temps total, i s'obre directament a l'Excel o al Google Sheets. Amb <strong>Descarrega el detall (CSV)</strong> obtens també la resposta de cada alumne a cada pregunta. Les capçaleres del CSV surten en l'idioma que tinguis triat en descarregar-lo.</p>
-  <div class="destacado">
+  <div class="dc-alert destacado">
     <strong>Important: el servidor no desa els resultats.</strong> Descarrega'ls en acabar. També queden a l'<strong>Historial</strong> del teu navegador (les últimes 60 partides), des d'on els pots tornar a descarregar.
   </div>
   <p>Si recarregues la pàgina amb una partida en marxa, hi pots tornar. Una partida es perd si el servidor es reinicia o si passen diverses hores sense activitat.</p>
@@ -111,10 +117,10 @@
   <p>Quest es una aplicación de cuestionarios en tiempo real, al estilo de Kahoot: tú proyectas las preguntas en clase y los alumnos responden desde el móvil tocando uno de cuatro botones de colores.</p>
 
   <div class="barra-descarga">
-    <a class="btn" data-pdf="es" href="/Guia-Quest-es.pdf" download>Descargar esta guía (PDF)</a>
-    <a class="btn secundario" href="/plantillas/Plantilla-Quest.xlsx" download>Plantilla Excel</a>
-    <a class="btn secundario" href="/plantillas/Plantilla-Quest.csv" download>Plantilla CSV</a>
-    <a class="btn secundario" href="/profesor">Entrar como profesor</a>
+    <a class="dc-btn dc-btn--primary" data-pdf="es" href="/Guia-Quest-es.pdf" download>Descargar esta guía (PDF)</a>
+    <a class="dc-btn dc-btn--secondary" href="/plantillas/Plantilla-Quest.xlsx" download>Plantilla Excel</a>
+    <a class="dc-btn dc-btn--secondary" href="/plantillas/Plantilla-Quest.csv" download>Plantilla CSV</a>
+    <a class="dc-btn dc-btn--secondary" href="/profesor">Entrar como profesor</a>
   </div>
 
   <h2>1. Antes de empezar</h2>
@@ -160,7 +166,7 @@
     <li>En cada pregunta corre el tiempo. La respuesta correcta se muestra al acabar el tiempo, cuando han respondido todos, o cuando pulses <strong>Mostrar respuesta</strong>. Después, <strong>Siguiente</strong> (también valen la barra espaciadora y la flecha →).</li>
     <li>El ranking aparece en un lateral de la pantalla y se actualiza al mostrar cada respuesta.</li>
   </ol>
-  <div class="destacado">
+  <div class="dc-alert destacado">
     <strong>Puntuación.</strong> Cada acierto vale 1 punto; fallar o no responder vale 0. La rapidez no da puntos extra: el tiempo de respuesta de los aciertos solo se suma para <strong>desempatar</strong> (queda por delante quien tarda menos).
   </div>
   <ul>
@@ -171,7 +177,7 @@
 
   <h2>5. Resultados</h2>
   <p>Al terminar, pulsa <strong>Descargar notas (CSV)</strong>. El archivo trae fecha, nombre, clase, cuestionario, fallos, puntuación total y tiempo total, y se abre directamente en Excel o Google Sheets. Con <strong>Descargar detalle (CSV)</strong> obtienes además la respuesta de cada alumno a cada pregunta.</p>
-  <div class="destacado">
+  <div class="dc-alert destacado">
     <strong>Importante: el servidor no guarda los resultados.</strong> Descárgalos al terminar. También quedan en el <strong>Historial</strong> de tu navegador (las últimas 60 partidas), desde donde puedes volver a descargarlos.
   </div>
   <p>Si recargas la página con una partida en marcha, puedes volver a ella. Una partida se pierde si el servidor se reinicia o si pasan varias horas sin actividad.</p>
@@ -200,6 +206,7 @@
   </ul>
 </div>
 </main>
+  <script src="/dc/iconos/iconos.js"></script>
   <script src="/i18n.js"></script>
   <script src="/js/ayuda.js"></script>
 </body>

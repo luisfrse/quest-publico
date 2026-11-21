@@ -10,7 +10,10 @@
     "test:navegador": "node test/navegador.js",
     "test:i18n": "node test/i18n.js",
     "test:idioma": "node test/idioma.js",
-    "test:control-sso": "node test/control-sso.js"
+    "test:control-sso": "node test/control-sso.js",
+    "dc": "node tools/actualizar-diseno-comun.mjs",
+    "e2e": "node tools/e2e.mjs",
+    "capturas": "node tools/e2e.mjs --capturas"
   },
   "engines": {
     "node": ">=22"

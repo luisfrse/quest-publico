@@ -2,29 +2,47 @@
 <html lang="ca">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-i18n-doc="ac.doc">Quest · Codis d'invitació</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0d1a2a">
+  <title data-i18n-doc="ac.doc">Quest · Resultats</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/dc/fuentes/fuentes.css">
+  <link rel="stylesheet" href="/dc/tokens.css">
+  <link rel="stylesheet" href="/dc/base.css">
   <link rel="stylesheet" href="/quest.css">
 </head>
-<body class="admin">
-  <div class="contenedor">
+<body class="dc-body admin">
+  <header class="dc-header q-cab">
+    <a class="dc-brand" href="/admin"><span class="dc-brand__tile"><span class="dc-icon" data-icon="flag" aria-hidden="true"></span></span><span>Quest</span></a>
+    <div class="dc-header__actions"><span data-lang-slot></span></div>
+  </header>
+
+  <main class="q-admin">
     <div class="cab">
       <h1><span class="logo">Quest</span> · <span data-i18n="ac.titulo"></span></h1>
-      <span class="cab-idioma" data-lang-slot></span>
-      <span class="estado-servidor" id="estado-servidor"></span>
+      <span class="dc-chip dc-chip--info estado-servidor" id="estado-servidor"></span>
     </div>
 
-    <div class="filtros">
-      <label class="campo"><span data-i18n="ac.persona"></span><input id="in-etiqueta" maxlength="60" data-i18n-ph="ac.persona_ph" autocomplete="off"></label>
-      <label class="campo"><span data-i18n="ac.caduca_opc"></span><input type="date" id="in-caduca"></label>
-      <button class="btn" id="btn-crear" type="button" data-i18n="ac.crear"></button>
+    <div class="q-kpis" id="kpis" aria-live="polite"></div>
+
+    <div class="dc-card filtros" role="group">
+      <div class="dc-field"><label class="dc-label" for="in-etiqueta" data-i18n="ac.persona"></label><input class="dc-input" id="in-etiqueta" maxlength="60" data-i18n-ph="ac.persona_ph" autocomplete="off"></div>
+      <div class="dc-field"><label class="dc-label" for="in-caduca" data-i18n="ac.caduca_opc"></label><input class="dc-input" type="date" id="in-caduca"></div>
+      <div class="filtros-acciones"><button class="dc-btn dc-btn--primary" id="btn-crear" type="button"><span class="dc-icon" data-icon="plus" aria-hidden="true"></span><span data-i18n="ac.crear"></span></button></div>
     </div>
-    <p class="error" id="error" hidden></p>
+    <p class="q-error" id="error" role="alert" hidden></p>
 
     <div id="nuevo"></div>
-    <div id="tabla" class="tabla-scroll"></div>
-  </div>
+    <div id="tabla" class="tabla-scroll" tabindex="0"></div>
+  </main>
+
+  <script src="/dc/iconos/iconos.js"></script>
   <script src="/i18n.js"></script>
+  <script src="/js/ui.js"></script>
   <script src="/js/admin.js"></script>
 </body>
 </html>

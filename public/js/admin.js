@@ -2,23 +2,7 @@
   const $ = (id) => document.getElementById(id);
   const T = I18N.T;
 
-  function el(tag, props, ...hijos) {
-    const e = document.createElement(tag);
-    if (props) {
-      for (const [k, v] of Object.entries(props)) {
-        if (k === 'class') e.className = v;
-        else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
-        else if (I18N.esD(v)) I18N.bind(e, k, v);
-        else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v);
-      }
-    }
-    for (const h of hijos.flat()) {
-      if (h === null || h === undefined || h === false) continue;
-      e.append(I18N.esD(h) ? I18N.nodo(h) : h.nodeType ? h : document.createTextNode(h));
-    }
-    return e;
-  }
-
+  const el = Q.el;
   // Fechas con formato del idioma elegido; se reformatean al cambiar de idioma sin recargar la tabla
   const celdaFecha = (iso) => (iso ? el('td', { 'data-fecha': iso }, I18N.fecha(iso)) : el('td', null, '—'));
   const celdaFechaHora = (iso) => (iso ? el('td', { 'data-fechahora': iso }, I18N.fechaHora(iso)) : el('td', null, T('ac.nunca')));
@@ -49,7 +33,7 @@
     try {
       await navigator.clipboard.writeText(texto);
     } catch (e) {
-      const t = el('textarea', { style: 'position:fixed;opacity:0' }, texto);
+      const t = el('textarea', { class: 'fuera-de-pantalla', 'aria-hidden': 'true', tabindex: '-1' }, texto);
       document.body.append(t);
       t.select();
       document.execCommand('copy');
@@ -65,11 +49,11 @@
   }
 
   function tarjetaNuevo(fila) {
-    const b1 = el('button', { class: 'btn secundario', type: 'button' }, T('ac.copiar_codigo'));
+    const b1 = el('button', { class: 'dc-btn dc-btn--secondary', type: 'button' }, Q.icono('copy'), T('ac.copiar_codigo'));
     b1.addEventListener('click', () => copiar(fila.codigo, b1));
-    const b2 = el('button', { class: 'btn', type: 'button' }, T('ac.copiar_msg'));
+    const b2 = el('button', { class: 'dc-btn dc-btn--primary', type: 'button' }, Q.icono('mail'), T('ac.copiar_msg'));
     b2.addEventListener('click', () => copiar(invitacion(fila), b2));
-    $('nuevo').replaceChildren(el('div', { class: 'codigo-nuevo', id: 'codigo-nuevo' },
+    $('nuevo').replaceChildren(el('div', { class: 'dc-card codigo-nuevo', id: 'codigo-nuevo' },
       el('div', null, el('div', null, T('ac.codigo_para', { n: fila.etiqueta })), el('div', { class: 'codigo-mono', id: 'codigo-nuevo-texto' }, fila.codigo)),
       b1, b2));
   }
@@ -77,9 +61,11 @@
   async function cargar() {
     const [codigos, estado] = await Promise.all([api('/api/admin/codigos'), api('/api/admin/estado')]);
     I18N.setT($('estado-servidor'), 'ac.estado_srv', { a: estado.partidasActivas, j: estado.jugadoresEnPartidas });
+    const kpi = (icono, num, clave) => el('div', { class: 'dc-card q-kpi' }, el('span', { class: 'q-kpi__icono' }, Q.icono(icono)), el('div', null, el('div', { class: 'q-kpi__num' }, String(num)), el('div', { class: 'q-kpi__txt' }, T(clave))));
+    $('kpis').replaceChildren(kpi('key', codigos.length, 'ac.k_codigos'), kpi('check-circle', codigos.filter((c) => c.estado === 'activo').length, 'ac.k_activos'), kpi('users', estado.partidasActivas, 'ac.k_vivo'));
 
     if (!codigos.length) {
-      $('tabla').replaceChildren(el('div', { class: 'vacio' }, T('ac.vacio')));
+      $('tabla').replaceChildren(el('div', { class: 'dc-state vacio' }, el('div', { class: 'dc-state__icon' }, Q.icono('key')), el('p', { class: 'dc-state__title' }, T('ac.vacio'))));
       return;
     }
     const cuerpo = el('tbody');
@@ -92,12 +78,12 @@
         f.estado === 'revocado' ? T('ac.reactivar') : T('ac.revocar'));
       bRevocar.addEventListener('click', async () => {
         const revocar = f.estado !== 'revocado';
-        if (revocar && !confirm(I18N.t('ac.confirm_revocar', { n: f.etiqueta }))) return;
+        if (revocar && !(await Q.confirmar(I18N.t('ac.confirm_revocar', { n: f.etiqueta }), { peligro: true, textoOk: T('ac.revocar') }))) return;
         try { await api('/api/admin/codigos/' + f.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ revocado: revocar }) }); await cargar(); } catch (e) { mostrarError(errDe(e)); }
       });
       const bBorrar = el('button', { class: 'link rojo', type: 'button', 'data-accion': 'borrar' }, T('ac.borrar'));
       bBorrar.addEventListener('click', async () => {
-        if (!confirm(I18N.t('ac.confirm_borrar', { n: f.etiqueta }))) return;
+        if (!(await Q.confirmar(I18N.t('ac.confirm_borrar', { n: f.etiqueta }), { peligro: true, textoOk: T('ac.borrar') }))) return;
         try { await api('/api/admin/codigos/' + f.id, { method: 'DELETE' }); await cargar(); } catch (e) { mostrarError(errDe(e)); }
       });
       cuerpo.append(el('tr', { 'data-id': String(f.id) },
@@ -108,7 +94,7 @@
         celdaFechaHora(f.ultimoUso),
         el('td', { class: 'num' }, String(f.partidas)),
         el('td', { class: 'num' }, f.enVivo.activas ? T('ac.en_vivo', { a: f.enVivo.activas, j: f.enVivo.jugadores }) : '—'),
-        el('td', null, el('span', { class: 'etiqueta-estado ' + f.estado }, I18N.has('ac.est_' + f.estado) ? T('ac.est_' + f.estado) : f.estado)),
+        el('td', null, el('span', { class: 'dc-chip dc-chip--dot etiqueta-estado ' + (f.estado === 'activo' ? 'dc-chip--ok ' : f.estado === 'revocado' ? 'dc-chip--danger ' : 'dc-chip--warn ') + f.estado }, I18N.has('ac.est_' + f.estado) ? T('ac.est_' + f.estado) : f.estado)),
         el('td', null, el('div', { class: 'acciones-fila' }, bCopiar, bInv, bRevocar, bBorrar))));
     }
     $('tabla').replaceChildren(el('table', null,

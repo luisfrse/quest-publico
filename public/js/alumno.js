@@ -1,6 +1,9 @@
   (() => {
     const LETRAS = ['A', 'B', 'C', 'D'];
-    const FORMAS = ['▲', '◆', '●', '■'];
+    const FORMAS = ['▲', '◆', '●', '■']; // solo para el texto «era la B ◆»; las formas dibujadas salen de Q.formaIcono
+    const anillo = Q.anillo('', 'p-tiempo');
+    document.getElementById('p-anillo').replaceWith(anillo.el);
+    const insignia = (i) => { const b = document.createElement('span'); b.className = 'q-forma op-' + i; b.append(Q.formaIcono(i)); return b; };
     const $ = (id) => document.getElementById(id);
     const vistas = ['v-entrada', 'v-lobby', 'v-pregunta', 'v-enviada', 'v-resultado', 'v-final'];
     const socket = io();
@@ -75,7 +78,8 @@
       } else if (e.fase === 'pregunta') {
         if (e.respondida !== null && e.respondida !== undefined) {
           mostrar('v-enviada');
-          $('v-enviada').className = 'pantalla-color neutro';
+          $('v-enviada').className = 'q-vista q-pantalla op-' + e.respondida;
+          $('e-icono').replaceChildren(insignia(e.respondida));
         } else {
           pintarPregunta(e);
         }
@@ -100,13 +104,15 @@
       for (let i = 0; i < e.nOpciones; i++) {
         const b = document.createElement('button');
         b.className = 'opcion op-' + i;
-        b.innerHTML = '<span class="forma"></span><span class="letra"></span>';
-        b.querySelector('.forma').textContent = FORMAS[i];
-        b.querySelector('.letra').textContent = LETRAS[i];
+        b.type = 'button';
+        b.setAttribute('aria-label', I18N.t('u.opcion', { l: LETRAS[i] }));
+        const letra = document.createElement('span'); letra.className = 'letra'; letra.textContent = LETRAS[i];
+        b.append(insignia(i), letra);
         b.addEventListener('click', () => {
           socket.emit('alumno:responder', { opcion: i });
           mostrar('v-enviada');
-          $('v-enviada').className = 'pantalla-color op-' + i;
+          $('v-enviada').className = 'q-vista q-pantalla op-' + i;
+          $('e-icono').replaceChildren(insignia(i));
         });
         cont.appendChild(b);
       }
@@ -115,7 +121,10 @@
       const total = e.tiempo * 1000;
       const paso = () => {
         const resto = Math.max(0, fin - performance.now());
-        $('p-tiempo').textContent = Math.ceil(resto / 1000) + ' s';
+        const seg = Math.ceil(resto / 1000);
+        $('p-tiempo').textContent = seg;
+        $('p-tiempo').classList.toggle('poco', seg <= 5);
+        anillo.poner(resto / total);
         $('p-barra').style.width = (resto / total * 100) + '%';
         if (resto > 0) animacion = requestAnimationFrame(paso);
       };
@@ -125,11 +134,12 @@
     function pintarResultado(e) {
       const caja = $('v-resultado');
       const sinResp = e.elegida === null || e.elegida === undefined;
-      caja.className = 'pantalla-color ' + (e.acierto ? 'acierto' : 'fallo');
-      $('r-icono').textContent = e.acierto ? '✓' : '✗';
+      caja.className = 'q-vista q-pantalla ' + (e.acierto ? 'acierto' : 'fallo');
+      $('r-icono').replaceChildren(Q.icono(e.acierto ? 'check' : 'x'));
       I18N.setT($('r-titulo'), e.acierto ? 'a.correcto' : (sinResp ? 'a.sin_respuesta' : 'a.incorrecto'));
       if (e.acierto) $('r-detalle').textContent = ''; else I18N.setT($('r-detalle'), 'a.era', { l: LETRAS[e.correcta], f: FORMAS[e.correcta] });
-      $('r-pos').replaceChildren(...(e.pos ? [I18N.nodo(I18N.T('a.posicion', { pos: e.pos })), ' · '] : []), I18N.nodo(I18N.T('a.puntos', { n: e.puntos })));
+      const dato = (icono, d) => { const x = document.createElement('span'); x.className = 'q-dato'; x.append(Q.icono(icono), I18N.nodo(d)); return x; };
+      $('r-pos').replaceChildren(...(e.pos ? [dato('trophy', I18N.T('a.posicion', { pos: e.pos }))] : []), dato('star', I18N.T('a.puntos', { n: e.puntos })));
       mostrar('v-resultado');
     }
 

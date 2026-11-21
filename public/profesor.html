@@ -2,31 +2,40 @@
 <html lang="ca">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0d1a2a">
   <title data-i18n-doc="p.doc">Quest · Professor</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/dc/fuentes/fuentes.css">
+  <link rel="stylesheet" href="/dc/tokens.css">
+  <link rel="stylesheet" href="/dc/base.css">
   <link rel="stylesheet" href="/quest.css">
 </head>
-<body class="profesor">
+<body class="dc-body profesor">
 
-  <header class="cabecera">
-    <span class="logo">Quest</span>
-    <span class="titulo" id="cab-titulo"></span>
-    <span class="cab-derecha">
-      <span class="cab-idioma" data-lang-slot></span>
-      <span class="sesion-mini" id="cab-sesion" hidden></span>
-      <span class="pin-mini" id="cab-pin" hidden></span>
-    </span>
+  <header class="dc-header q-cab">
+    <a class="dc-brand" href="/profesor"><span class="dc-brand__tile"><span class="dc-icon" data-icon="flag" aria-hidden="true"></span></span><span>Quest</span></a>
+    <span class="q-cab__titulo" id="cab-titulo"></span>
+    <span class="q-pin-chip" id="cab-pin" hidden></span>
+    <div class="dc-header__actions"><span class="sesion-mini" id="cab-sesion" hidden></span><span data-lang-slot></span></div>
   </header>
 
-  <div class="pagina">
-    <main class="principal" id="principal"></main>
-    <aside class="lateral" id="lateral" hidden>
-      <h2 id="lat-titulo"></h2>
+  <div class="q-pagina" id="pagina">
+    <main class="q-principal" id="principal"></main>
+    <aside class="dc-card lateral" id="lateral" hidden>
+      <h2><span class="dc-icon" data-icon="trophy" aria-hidden="true"></span><span id="lat-titulo"></span></h2>
       <ol class="ranking" id="ranking"></ol>
     </aside>
   </div>
 
+  <script src="/dc/iconos/iconos.js"></script>
+  <script src="/dc/base.js"></script>
   <script src="/i18n.js"></script>
+  <script src="/js/ui.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/vendor/fflate.js"></script>
   <script type="module" src="/js/profesor.js"></script>

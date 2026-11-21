@@ -1,0 +1,18 @@
+{
+  "origen": "diseno-comun",
+  "commit": "9fc041f",
+  "ficheros": {
+    "tokens.css": "7c81051d6a5a1dd6",
+    "base.css": "4a017b551b787ae6",
+    "base.js": "b3c194d295a842d0",
+    "fuentes/fuentes.css": "652bc7534ee24e09",
+    "fuentes/LICENCIAS.txt": "eecab8e249ef58eb",
+    "fuentes/bricolage-latin.woff2": "a79fdb52d4a5c765",
+    "fuentes/bricolage-latin-ext.woff2": "776f6dcaf03636cd",
+    "fuentes/sourcesans3-latin.woff2": "19143dca075972bc",
+    "fuentes/sourcesans3-latin-ext.woff2": "a85a7459bdb3cdc1",
+    "iconos/iconos.js": "fec5fc24ad37b717",
+    "entrada/entrada.js": "39d170bca171e12c",
+    "entrada/entrada.css": "42746375ccb5eae6"
+  }
+}

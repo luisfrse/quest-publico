@@ -67,3 +67,9 @@ Si cambias `public/ayuda.html`, regenera los PDF con `node tools/generar-guias.j
 ## Pruebas
 
 `npm test` ejecuta, en orden: servidor (`test/servidor.js`), navegador con Playwright/Chromium (`test/navegador.js`), idioma en el navegador (`test/idioma.js`) y diccionario (`test/i18n.js`). `npm run test:servidor` y `npm run test:i18n` no necesitan navegador.
+
+## Diseño común y comprobaciones
+
+- `public/dc/` es una copia del diseño común (`npm run dc` la actualiza desde `../diseno-comun`; `public/dc/VERSION.json` anota la versión).
+- CSP sin `unsafe-inline` (ni scripts ni estilos en línea). `/admin` sigue con contraseña HTTP básica; si se cancela el aviso del navegador se ve una página clara (`public/acceso-requerido.html`, `acceso-bloqueado.html`).
+- `npm run e2e`: recorrido completo con Chrome real (acceso con código, importar, partida, alumno, historial, administración, guía, CSP, 360 px, objetivos de 44 px). `npm run capturas` genera `docs/capturas/` (no versionada).

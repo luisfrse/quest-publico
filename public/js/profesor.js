@@ -4,8 +4,7 @@ import {
   fechaCorta, csvNotas, csvDetalle, exportarCopia, importarCopia,
 } from './almacen.js';
 
-const LETRAS = ['A', 'B', 'C', 'D'];
-const FORMAS = ['▲', '◆', '●', '■'];
+const LETRAS = Q.LETRAS;
 const $ = (id) => document.getElementById(id);
 // I18N es global (/i18n.js). T(clave, vars) crea un texto que se vuelve a traducir solo al cambiar de idioma.
 const T = I18N.T;
@@ -32,22 +31,10 @@ const ss = {
 };
 
 // ---------------------------------------------------------------- utilidades de interfaz
-function el(tag, props, ...hijos) {
-  const e = document.createElement(tag);
-  if (props) {
-    for (const [k, v] of Object.entries(props)) {
-      if (k === 'class') e.className = v;
-      else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
-      else if (I18N.esD(v)) I18N.bind(e, k, v);
-      else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v);
-    }
-  }
-  for (const h of hijos.flat()) {
-    if (h === null || h === undefined || h === false) continue;
-    e.append(I18N.esD(h) ? I18N.nodo(h) : h.nodeType ? h : document.createTextNode(h));
-  }
-  return e;
-}
+const el = Q.el;
+const alerta = (texto, id) => el('div', { class: 'dc-alert dc-alert--danger', role: 'alert', id: id || null }, Q.icono('x-circle'), el('div', null, texto));
+const vacio = (icono, texto) => el('div', { class: 'dc-state' }, el('div', { class: 'dc-state__icon' }, Q.icono(icono)), el('p', { class: 'dc-state__title ranking-vacio' }, texto));
+const mostrarLateral = (v) => { $('lateral').hidden = !v; $('pagina').classList.toggle('con-lateral', v); };
 
 // titulo: texto de la partida (no se traduce) · claveTitulo: clave del diccionario
 function cabecera({ titulo = '', claveTitulo = null, pin = null, sesion = false } = {}) {
@@ -60,13 +47,9 @@ function cabecera({ titulo = '', claveTitulo = null, pin = null, sesion = false 
   s.textContent = sesion ? etiqueta : '';
 }
 
-function ocultarLateral() { $('lateral').hidden = true; }
+function ocultarLateral() { mostrarLateral(false); }
 
-function aviso(texto, tipo) {
-  const t = el('div', { class: 'toast ' + (tipo || ''), role: 'status' }, texto);
-  document.body.append(t);
-  setTimeout(() => t.remove(), 6000);
-}
+function aviso(texto, tipo) { Q.aviso([texto], tipo === 'error' ? 'error' : ''); }
 
 function segundosFmt(ms) { return I18N.seg(ms); }
 
@@ -104,10 +87,10 @@ async function acceder(codigo) {
 }
 
 function tarjetaContacto() {
-  return el('div', { class: 'aviso-contacto' },
-    el('strong', null, T('p.contacto_fuerte'), ' '),
-    T('p.contacto_texto'), ' ',
-    el('a', { href: contactUrl, target: '_blank', rel: 'noopener' }, T('p.contacto_enlace')));
+  return el('div', { class: 'dc-alert aviso-contacto' }, Q.icono('mail'),
+    el('div', null, el('strong', null, T('p.contacto_fuerte'), ' '),
+      T('p.contacto_texto'), ' ',
+      el('a', { href: contactUrl, target: '_blank', rel: 'noopener' }, T('p.contacto_enlace'))));
 }
 
 // La guía PDF existe en cada idioma: el enlace sigue al selector
@@ -119,7 +102,7 @@ function enlaceGuia(texto, clase) {
 }
 
 function enlacesAyuda() {
-  return el('p', { class: 'enlaces-ayuda' },
+  return el('p', { class: 'enlaces-ayuda' }, Q.icono('book'), ' ',
     enlaceGuia(T('p.guia_pdf')),
     ' · ',
     el('a', { href: '/ayuda', target: '_blank', rel: 'noopener' }, T('p.ver_instr')));
@@ -132,32 +115,35 @@ function pantallaAcceso(mensaje) {
   clearInterval(temporizador);
   ocultarLateral();
   cabecera({});
-  const error = el('p', { class: 'error', id: 'err-acceso', hidden: mensaje ? null : 'hidden' }, mensaje || '');
+  const error = el('p', { class: 'q-error', id: 'err-acceso', role: 'alert', hidden: mensaje ? null : 'hidden' }, mensaje || '');
   const entrada = el('input', {
-    type: 'text', id: 'in-codigo', placeholder: 'XXXXX-XXXXX', 'aria-label': T('p.codigo_inv'), autocomplete: 'off',
+    type: 'text', id: 'in-codigo', class: 'dc-input dc-input--code', placeholder: 'XXXXX-XXXXX', autocomplete: 'off',
     autocapitalize: 'characters', spellcheck: 'false', maxlength: '16', required: 'required',
   });
   const recordar = el('input', { type: 'checkbox', id: 'chk-recordar', checked: 'checked' });
-  const boton = el('button', { class: 'btn grande', type: 'submit', id: 'btn-acceso' }, T('p.entrar'));
+  const boton = el('button', { class: 'dc-btn dc-btn--primary dc-btn--lg dc-btn--block', type: 'submit', id: 'btn-acceso' }, T('p.entrar'));
   const form = el('form', {
-    class: 'acceso',
+    class: 'acceso dc-form',
     onsubmit: async (ev) => {
       ev.preventDefault();
-      boton.disabled = true;
+      boton.disabled = true; boton.setAttribute('aria-busy', 'true');
       const r = await acceder(entrada.value);
-      boton.disabled = false;
-      if (!r.ok) { error.replaceChildren(I18N.nodo(r.error)); error.hidden = false; return; }
+      boton.disabled = false; boton.removeAttribute('aria-busy');
+      if (!r.ok) { error.replaceChildren(I18N.nodo(r.error)); error.hidden = false; entrada.setAttribute('aria-invalid', 'true'); entrada.focus(); return; }
       if (recordar.checked) codigoGuardado.guardar(entrada.value); else codigoGuardado.borrar();
       entrarTrasAcceso();
     },
   },
-    el('label', { class: 'campo' }, el('span', null, T('p.codigo_inv')), entrada),
-    el('label', { class: 'casilla' }, recordar, T('p.recordar')),
+    el('div', { class: 'dc-field' }, el('label', { class: 'dc-label', for: 'in-codigo' }, T('p.codigo_inv')), entrada),
+    el('label', { class: 'dc-check casilla', for: 'chk-recordar' }, recordar, el('span', null, T('p.recordar'))),
     boton);
-  principal.replaceChildren(el('div', { class: 'centrado tarjeta estrecha' },
-    el('h1', { style: 'margin:0 0 0.4rem' }, T('p.acceso_titulo')),
-    el('p', { class: 'nota' }, T('p.acceso_nota')),
-    error, form, tarjetaContacto(), enlacesAyuda()));
+  principal.replaceChildren(el('div', { class: 'q-acceso' },
+    el('div', { class: 'dc-card q-acceso__tarjeta' },
+      el('span', { class: 'q-gran-icono' }, Q.icono('key')),
+      el('h1', null, T('p.acceso_titulo')),
+      el('p', { class: 'nota' }, T('p.acceso_nota')),
+      error, form),
+    tarjetaContacto(), enlacesAyuda()));
   entrada.focus();
 }
 
@@ -232,7 +218,7 @@ principal.addEventListener('drop', (ev) => {
 
 function menu(titulo, items, clase) {
   const d = el('details', { class: 'menu' },
-    el('summary', { class: clase || 'btn secundario' }, titulo),
+    el('summary', { class: clase || 'dc-btn dc-btn--secondary' }, titulo),
     el('div', { class: 'menu-items' }, items));
   d.addEventListener('click', (ev) => { if (ev.target.closest('a,button')) d.open = false; });
   return d;
@@ -247,8 +233,8 @@ function pantallaInicio() {
   cabecera({ claveTitulo: 'p.mis_cuestionarios', sesion: true });
 
   const lista = biblioteca.listar();
-  const btnCrear = el('button', { class: 'btn grande', id: 'btn-crear', disabled: 'disabled', onclick: crear }, T('p.crear_partida'));
-  const errCrear = el('p', { class: 'error', id: 'err-crear', hidden: 'hidden' });
+  const btnCrear = Q.boton(T('p.crear_partida'), { id: 'btn-crear', clase: 'dc-btn--primary dc-btn--lg dc-btn--block', icono: 'play', disabled: true, onclick: crear });
+  const errCrear = el('p', { class: 'q-error', id: 'err-crear', role: 'alert', hidden: 'hidden' });
   const contenedor = el('div', { class: 'lista-cuestionarios', id: 'lista-cuestionarios' });
 
   const grupos = new Map();
@@ -277,16 +263,17 @@ function pantallaInicio() {
       ss.set('quest-grupos', JSON.stringify(Array.from(contenedor.querySelectorAll('details[open]')).map((d) => d.dataset.grupo)));
     });
     carpeta.append(el('summary', null,
-      el('span', { class: 'carpeta-nombre' }, '📁 ', nombre === 'Otros' ? T('otros') : nombre),
+      el('span', { class: 'carpeta-nombre' }, Q.icono('folder'), nombre === 'Otros' ? T('otros') : nombre),
       el('small', null, T('p.n_cuestionarios', { n: cuestionarios.length }))));
     const dentro = el('div', { class: 'carpeta-items' });
     for (const { c, nombre: corto } of cuestionarios) {
       const item = el('div', { class: 'ci', 'data-busqueda': c.titulo.toLowerCase(), 'data-id': c.id },
         el('button', { class: 'ci-main', type: 'button', onclick: () => marcar(c, item) },
+          el('span', { class: 'q-marca' }, Q.icono('check')),
           el('strong', null, corto),
           el('small', null, T('p.n_preguntas', { n: c.preguntas.length }))),
-        el('button', { class: 'ci-accion', type: 'button', title: T('p.cambiar_nombre'), 'aria-label': T('p.cambiar_nombre'), onclick: () => renombrar(c) }, '✎'),
-        el('button', { class: 'ci-accion peligro', type: 'button', title: T('p.eliminar'), 'aria-label': T('p.eliminar'), onclick: () => eliminar(c) }, '🗑'));
+        el('button', { class: 'ci-accion', type: 'button', title: T('p.cambiar_nombre'), 'aria-label': T('p.cambiar_nombre'), onclick: () => renombrar(c) }, Q.icono('edit')),
+        el('button', { class: 'ci-accion peligro', type: 'button', title: T('p.eliminar'), 'aria-label': T('p.eliminar'), onclick: () => eliminar(c) }, Q.icono('trash')));
       dentro.append(item);
       if (c.id === ultimo) marcar(c, item);
     }
@@ -294,7 +281,7 @@ function pantallaInicio() {
     contenedor.append(carpeta);
   }
 
-  const buscador = el('input', { class: 'buscador', type: 'search', placeholder: T('p.buscar'), 'aria-label': T('p.buscar'), autocomplete: 'off' });
+  const buscador = el('input', { class: 'dc-input buscador', type: 'search', placeholder: T('p.buscar'), 'aria-label': T('p.buscar'), autocomplete: 'off' });
   buscador.addEventListener('input', () => {
     const q = buscador.value.trim().toLowerCase();
     for (const carpeta of contenedor.querySelectorAll('details.carpeta')) {
@@ -320,7 +307,7 @@ function pantallaInicio() {
     el('button', { type: 'button', onclick: () => inputCopia.click() }, T('p.importar_copia')),
   ], 'enlace-menu');
 
-  const vacio = el('div', { class: 'pasos' },
+  const pasos = el('div', { class: 'dc-card pasos' },
     el('h2', null, T('p.pasos_titulo')),
     el('ol', null,
       el('li', null, T('p.paso1')),
@@ -328,23 +315,23 @@ function pantallaInicio() {
       el('li', null, T('p.paso3'))),
     el('p', { class: 'nota' }, T('p.consejo')));
 
-  principal.replaceChildren(el('div', { class: 'centrado tarjeta ancha' },
-    el('div', { class: 'fila-titulo' },
-      el('h1', { style: 'margin:0' }, T('p.mis_cuestionarios')),
-      el('div', { class: 'acciones' },
+  principal.replaceChildren(el('div', { class: 'q-bloque' },
+    el('div', { class: 'q-fila-titulo' },
+      el('h1', null, T('p.mis_cuestionarios')),
+      el('div', { class: 'q-acciones' },
         plantillas,
-        el('button', { class: 'btn', id: 'btn-importar', type: 'button', onclick: () => inputArchivos.click() }, T('p.importar')))),
+        Q.boton(T('p.importar'), { id: 'btn-importar', clase: 'dc-btn--primary', icono: 'upload', onclick: () => inputArchivos.click() }))),
     hayAlmacen ? el('p', { class: 'nota' }, T('p.nota_navegador'))
-      : el('p', { class: 'error' }, T('p.sin_almacen')),
-    lista.length ? [lista.length > 6 ? buscador : null, contenedor] : vacio,
+      : alerta(T('p.sin_almacen')),
+    lista.length ? [lista.length > 6 ? buscador : null, contenedor] : pasos,
     errCrear,
-    el('div', { style: 'text-align:center;margin-top:1rem' }, btnCrear),
+    el('div', { class: 'q-crear' }, btnCrear),
     el('div', { class: 'pie-acciones' },
       el('button', { class: 'enlace-menu', type: 'button', id: 'btn-historial', onclick: pantallaHistorial },
-        T('p.historial', { n: historial.listar().length })),
+        Q.icono('clock'), T('p.historial', { n: historial.listar().length })),
       copia,
       enlaceGuia(T('p.instrucciones_pdf'), 'enlace-menu'),
-      el('button', { class: 'enlace-menu', type: 'button', id: 'btn-salir', onclick: salir }, T('p.salir')))));
+      el('button', { class: 'enlace-menu', type: 'button', id: 'btn-salir', onclick: salir }, Q.icono('log-out'), T('p.salir')))));
 }
 
 function salir() {
@@ -353,8 +340,8 @@ function salir() {
   pantallaAcceso();
 }
 
-function renombrar(c) {
-  const nuevo = prompt(I18N.t('p.prompt_renombrar'), c.titulo);
+async function renombrar(c) {
+  const nuevo = await Q.preguntar(I18N.t('p.prompt_renombrar'), c.titulo);
   if (nuevo === null) return;
   const titulo = nuevo.replace(/\s+/g, ' ').trim().slice(0, 80);
   if (!titulo) return;
@@ -364,8 +351,8 @@ function renombrar(c) {
   pantallaInicio();
 }
 
-function eliminar(c) {
-  if (!confirm(I18N.t('p.confirm_eliminar', { t: c.titulo }))) return;
+async function eliminar(c) {
+  if (!(await Q.confirmar(I18N.t('p.confirm_eliminar', { t: c.titulo }), { peligro: true, textoOk: T('borrar') }))) return;
   biblioteca.borrar(c.id);
   if (ss.get('quest-ultimo') === c.id) ss.del('quest-ultimo');
   pantallaInicio();
@@ -392,15 +379,15 @@ function vistaPrevia(nombreArchivo, r, hayMas) {
     ocultarLateral();
     cabecera({ claveTitulo: 'p.importar', sesion: true });
     const valido = r.errores.length === 0;
-    const titulo = el('input', { type: 'text', id: 'in-titulo', maxlength: '80', value: r.titulo });
-    const hint = el('p', { class: 'nota', id: 'hint-titulo' });
+    const titulo = el('input', { type: 'text', id: 'in-titulo', class: 'dc-input', maxlength: '80', value: r.titulo });
+    const hint = el('p', { class: 'dc-hint nota', id: 'hint-titulo' });
     const textoHint = I18N.nodo(T('p.imp_sustituye'));
     const actualizarHint = () => {
       if (biblioteca.porTitulo(titulo.value)) hint.replaceChildren(textoHint); else hint.replaceChildren();
     };
     titulo.addEventListener('input', actualizarHint);
     actualizarHint();
-    const errGuardar = el('p', { class: 'error', id: 'err-guardar', hidden: 'hidden' });
+    const errGuardar = el('p', { class: 'q-error', id: 'err-guardar', role: 'alert', hidden: 'hidden' });
 
     const guardar = () => {
       const t = titulo.value.replace(/\s+/g, ' ').trim().slice(0, 80) || r.titulo;
@@ -422,37 +409,37 @@ function vistaPrevia(nombreArchivo, r, hayMas) {
       resolve('guardado');
     };
 
-    const muestra = r.preguntas.slice(0, 3).map((p, i) => el('div', { class: 'muestra' },
+    const muestra = r.preguntas.slice(0, 3).map((p, i) => el('div', { class: 'dc-card muestra' },
       el('strong', null, `${i + 1}. ${p.texto}`),
       el('small', null, p.tiempo + ' ', T('s')),
       el('ul', null,
-        el('li', { class: 'ok' }, '✓ ' + p.correcta),
-        p.incorrectas.map((x) => el('li', null, '✗ ' + x)))));
+        el('li', { class: 'ok' }, Q.icono('check'), p.correcta),
+        p.incorrectas.map((x) => el('li', { class: 'ko' }, Q.icono('x'), x)))));
 
     const tiempoMedio = r.preguntas.length
       ? Math.round(r.preguntas.reduce((s, p) => s + p.tiempo, 0) / r.preguntas.length) : 0;
 
-    principal.replaceChildren(el('div', { class: 'centrado tarjeta ancha' },
-      el('h1', { style: 'margin:0 0 0.2rem' }, T('p.importar')),
+    principal.replaceChildren(el('div', { class: 'q-bloque' },
+      el('h1', null, T('p.importar')),
       el('p', { class: 'nota' }, T('p.imp_archivo', { f: nombreArchivo })),
       valido ? [
-        el('label', { class: 'campo' }, el('span', null, T('p.imp_nombre')), titulo),
+        el('div', { class: 'dc-field' }, el('label', { class: 'dc-label', for: 'in-titulo' }, T('p.imp_nombre')), titulo),
         hint,
         el('p', { class: 'resumen-import', id: 'resumen-import' },
           el('strong', null, T('p.imp_validas', { n: r.preguntas.length })),
           T('p.imp_tiempo_medio', { t: tiempoMedio }), r.avisos.length ? T('p.imp_n_avisos', { n: r.avisos.length }) : null),
       ] : null,
-      r.errores.length ? el('div', { class: 'error', id: 'errores-import' }, r.errores.map((x) => el('p', { style: 'margin:0.2rem 0' }, T(x.k, x.v)))) : null,
-      r.avisos.length ? el('details', { class: 'avisos-import', open: r.avisos.length <= 4 ? 'open' : null },
+      r.errores.length ? el('div', { class: 'dc-alert dc-alert--danger', id: 'errores-import', role: 'alert' }, Q.icono('x-circle'), el('div', null, r.errores.map((x) => el('p', null, T(x.k, x.v))))) : null,
+      r.avisos.length ? el('details', { class: 'dc-card avisos-import', open: r.avisos.length <= 4 ? 'open' : null },
         el('summary', null, T('p.imp_avisos', { n: r.avisos.length })),
         el('ul', null, r.avisos.slice(0, 15).map((a) => el('li', null, T(a.k, a.v))),
           r.avisos.length > 15 ? el('li', null, T('p.imp_mas', { n: r.avisos.length - 15 })) : null)) : null,
       valido ? el('div', { class: 'muestras' }, el('h2', null, T('p.imp_asi')), muestra) : null,
       errGuardar,
       el('div', { class: 'acciones-fin' },
-        valido ? el('button', { class: 'btn grande', id: 'btn-guardar-import', type: 'button', onclick: guardar }, T('p.imp_guardar')) : null,
-        el('button', { class: 'btn secundario', type: 'button', id: 'btn-omitir', onclick: () => resolve('omitido') }, hayMas ? T('p.imp_omitir') : T('p.imp_cancelar')),
-        hayMas ? el('button', { class: 'btn secundario', type: 'button', onclick: () => resolve('parar') }, T('p.imp_cancelar_resto')) : null)));
+        valido ? Q.boton(T('p.imp_guardar'), { id: 'btn-guardar-import', clase: 'dc-btn--primary dc-btn--lg', icono: 'check', onclick: guardar }) : null,
+        Q.boton(hayMas ? T('p.imp_omitir') : T('p.imp_cancelar'), { id: 'btn-omitir', onclick: () => resolve('omitido') }),
+        hayMas ? Q.boton(T('p.imp_cancelar_resto'), { onclick: () => resolve('parar') }) : null)));
   });
 }
 
@@ -470,29 +457,29 @@ function pantallaHistorial() {
       el('summary', null,
         el('span', { class: 'partida-titulo' }, p.titulo),
         el('small', null, T('p.hist_resumen', { f: fechaCorta(p.fecha), n: p.jugadores.length, c: clases }))),
-      el('div', { class: 'tabla-scroll' }, el('table', null,
+      el('div', { class: 'tabla-scroll', tabindex: '0' }, el('table', null,
         el('thead', null, el('tr', null, ['p.th_pos', 'p.th_nombre', 'p.th_clase', 'p.th_puntos', 'p.th_fallos', 'p.th_tiempo'].map((h) => el('th', null, T(h))))),
         el('tbody', null, p.jugadores.map((j) => el('tr', null,
           el('td', null, String(j.pos)), el('td', null, j.nombre), el('td', null, j.clase),
           el('td', null, j.puntos + ' / ' + p.jugadas), el('td', null, String(j.fallos)), el('td', null, segundosFmt(j.tiempoMs))))))),
       el('div', { class: 'acciones-fin' },
-        el('button', { class: 'btn', type: 'button', onclick: () => descargar(`quest-notas-${nombreSeguro(p.titulo)}-${p.fecha.slice(0, 10)}.csv`, csvNotas([p]), 'text/csv;charset=utf-8') }, T('p.dl_notas')),
-        el('button', { class: 'btn secundario', type: 'button', onclick: () => descargar(`quest-detalle-${nombreSeguro(p.titulo)}-${p.fecha.slice(0, 10)}.csv`, csvDetalle([p]), 'text/csv;charset=utf-8') }, T('p.dl_detalle')),
-        el('button', { class: 'btn peligro', type: 'button', onclick: () => {
-          if (!confirm(I18N.t('p.confirm_borrar_partida'))) return;
+        Q.boton(T('p.dl_notas'), { clase: 'dc-btn--primary', icono: 'download', onclick: () => descargar(`quest-notas-${nombreSeguro(p.titulo)}-${p.fecha.slice(0, 10)}.csv`, csvNotas([p]), 'text/csv;charset=utf-8') }),
+        Q.boton(T('p.dl_detalle'), { icono: 'download', onclick: () => descargar(`quest-detalle-${nombreSeguro(p.titulo)}-${p.fecha.slice(0, 10)}.csv`, csvDetalle([p]), 'text/csv;charset=utf-8') }),
+        Q.boton(T('borrar'), { clase: 'dc-btn--danger', icono: 'trash', onclick: async () => {
+          if (!(await Q.confirmar(I18N.t('p.confirm_borrar_partida'), { peligro: true, textoOk: T('borrar') }))) return;
           historial.borrar(p.id);
           pantallaHistorial();
-        } }, T('borrar'))));
+        } })));
   });
 
-  principal.replaceChildren(el('div', { class: 'centrado tarjeta ancha' },
-    el('div', { class: 'fila-titulo' },
-      el('h1', { style: 'margin:0' }, T('p.hist_titulo')),
-      el('div', { class: 'acciones' },
-        el('button', { class: 'btn secundario', type: 'button', id: 'btn-volver', onclick: pantallaInicio }, T('volver')),
-        partidas.length ? el('button', { class: 'btn', type: 'button', id: 'btn-todo-notas', onclick: () => descargar('quest-notas-todas.csv', csvNotas(partidas), 'text/csv;charset=utf-8') }, T('p.dl_todas')) : null)),
+  principal.replaceChildren(el('div', { class: 'q-bloque' },
+    el('div', { class: 'q-fila-titulo' },
+      el('h1', null, T('p.hist_titulo')),
+      el('div', { class: 'q-acciones' },
+        Q.boton(T('volver'), { id: 'btn-volver', icono: 'arrow-left', onclick: pantallaInicio }),
+        partidas.length ? Q.boton(T('p.dl_todas'), { id: 'btn-todo-notas', clase: 'dc-btn--primary', icono: 'download', onclick: () => descargar('quest-notas-todas.csv', csvNotas(partidas), 'text/csv;charset=utf-8') }) : null)),
     el('p', { class: 'nota' }, T('p.hist_nota')),
-    partidas.length ? items : el('p', { class: 'ranking-vacio' }, T('p.hist_vacio'))));
+    partidas.length ? items : vacio('clock', T('p.hist_vacio'))));
 }
 
 // ---------------------------------------------------------------- crear y seguir la partida
@@ -555,36 +542,36 @@ async function cargarQr(pin, img) {
     }
     img.src = cacheQr[pin];
   } catch (e) {
-    img.replaceWith(el('p', { class: 'ranking-vacio' }, T('p.no_qr')));
+    img.replaceWith(el('p', { class: 'qr-pie' }, T('p.no_qr')));
   }
 }
 
 function pintarLobby(e) {
   ocultarLateral();
   const chips = el('div', { class: 'chips' });
-  if (!e.lobby.length) chips.append(el('span', { class: 'ranking-vacio' }, T('p.esperando')));
+  if (!e.lobby.length) chips.append(vacio('users', T('p.esperando')));
   for (const j of e.lobby) {
     chips.append(el('span', { class: 'chip' }, j.nombre, el('small', null, j.clase),
-      el('button', { title: T('p.sacar'), 'aria-label': T('p.sacar'), onclick: () => socket.emit('profesor:expulsar', { id: j.id }) }, '×')));
+      el('button', { type: 'button', title: T('p.sacar'), 'aria-label': T('p.sacar'), onclick: () => socket.emit('profesor:expulsar', { id: j.id }) }, Q.icono('x'))));
   }
   const qr = el('img', { class: 'qr', alt: T('p.qr_alt'), width: '260', height: '260' });
   cargarQr(e.pin, qr);
-  principal.replaceChildren(el('div', { class: 'centrado' },
-    el('div', { class: 'entrada-fila' },
+  principal.replaceChildren(el('div', { class: 'q-bloque' },
+    el('div', { class: 'dc-card q-union' },
       el('div', { class: 'entrada-texto' },
         el('p', { class: 'url-union' }, T('p.entra_movil'), el('strong', null, location.host)),
         el('p', { class: 'url-union' }, T('p.introduce_codigo')),
         el('div', { class: 'pin-grande', id: 'pin-grande' }, e.pin)),
       el('div', { class: 'entrada-qr' }, qr, el('p', { class: 'qr-pie' }, T('p.o_qr')))),
-    el('p', { class: 'contador-resp', id: 'contador-lobby' }, T('p.n_dentro', { n: e.numJugadores })),
+    el('p', { class: 'q-contador' }, Q.icono('users'), el('span', { id: 'contador-lobby' }, T('p.n_dentro', { n: e.numJugadores }))),
     chips,
-    el('div', { style: 'display:flex;gap:1rem;justify-content:center' },
-      el('button', { class: 'btn secundario', id: 'btn-cancelar', onclick: cancelarPartida }, T('cancelar')),
-      el('button', { class: 'btn grande', id: 'btn-empezar', disabled: e.numJugadores ? null : 'disabled', onclick: () => socket.emit('profesor:iniciar') }, T('p.empezar')))));
+    el('div', { class: 'q-botonera' },
+      Q.boton(T('cancelar'), { id: 'btn-cancelar', onclick: cancelarPartida }),
+      Q.boton(T('p.empezar'), { id: 'btn-empezar', clase: 'dc-btn--primary dc-btn--lg', icono: 'play', disabled: !e.numJugadores, onclick: () => socket.emit('profesor:iniciar') }))));
 }
 
-function cancelarPartida() {
-  if (!confirm(I18N.t('p.confirm_cancelar'))) return;
+async function cancelarPartida() {
+  if (!(await Q.confirmar(I18N.t('p.confirm_cancelar'), { peligro: true }))) return;
   cerrarYVolver();
 }
 
@@ -595,43 +582,55 @@ function cerrarYVolver() {
   pantallaInicio();
 }
 
+let anilloActual = null;
 function pintarPregunta(e) {
+  mostrarLateral(true);
   const p = e.pregunta;
   const revelada = e.fase === 'revelada';
-  const temporizadorEl = el('div', { class: 'temporizador', id: 'temporizador' }, revelada ? '' : Math.ceil(p.restanteMs / 1000));
+  anilloActual = Q.anillo('q-anillo--grande', 'temporizador');
+  if (!revelada) anilloActual.texto.textContent = Math.ceil(p.restanteMs / 1000);
   const barra = el('i', { id: 'barra' });
   const opciones = el('div', { class: 'grid-opciones' + (p.opciones.length === 1 ? ' una-sola-columna' : '') });
+  const maxConteo = revelada ? Math.max(1, ...e.revelada.conteo) : 1;
   p.opciones.forEach((texto, i) => {
     const clases = ['opcion-pro', 'op-' + i];
     if (revelada) clases.push(i === e.revelada.correcta ? 'correcta' : 'apagada');
-    opciones.append(el('div', { class: clases.join(' ') },
-      el('span', { class: 'letra-pro' }, FORMAS[i] + ' ' + LETRAS[i]),
-      el('span', null, texto),
-      revelada ? el('span', { class: 'cuenta' }, String(e.revelada.conteo[i])) : null));
+    const forma = el('span', { class: 'q-forma' }, Q.formaIcono(i));
+    const fila = el('div', { class: clases.join(' ') },
+      revelada ? el('span', { class: 'barra-conteo' }) : null,
+      forma,
+      el('span', { class: 'texto' }, el('span', { class: 'letra-pro' }, LETRAS[i] + '. '), texto),
+      revelada && i === e.revelada.correcta ? el('span', { class: 'marca-ok' }, Q.icono('check'), T('a.correcto')) : null,
+      revelada ? el('span', { class: 'cuenta' }, String(e.revelada.conteo[i])) : null);
+    if (revelada) fila.querySelector('.barra-conteo').style.width = (100 * e.revelada.conteo[i] / maxConteo) + '%';
+    opciones.append(fila);
   });
 
   const acciones = el('div', { class: 'barra-acciones' });
+  const pct = e.numJugadores ? Math.round(100 * p.respondidos / e.numJugadores) : 0;
+  const medidor = el('span', { class: 'dc-meter q-progreso-resp', id: 'meter-resp', 'data-value': pct }, el('span'));
   if (!revelada) {
     acciones.append(
-      el('span', { class: 'contador-resp', id: 'contador' }, T('p.han_respondido', { r: p.respondidos, n: e.numJugadores })),
-      el('span', { style: 'display:flex;gap:0.6rem' },
-        el('button', { class: 'btn peligro', id: 'btn-terminar', onclick: terminar }, T('p.terminar')),
-        el('button', { class: 'btn', id: 'btn-revelar', onclick: () => socket.emit('profesor:revelar') }, T('p.mostrar_resp'))));
+      el('span', { class: 'q-bloque-cont' }, el('span', { class: 'contador-resp' }, Q.icono('users'), el('span', { id: 'contador' }, T('p.han_respondido', { r: p.respondidos, n: e.numJugadores }))), medidor),
+      el('span', { class: 'q-acciones' },
+        Q.boton(T('p.terminar'), { id: 'btn-terminar', clase: 'dc-btn--danger', onclick: terminar }),
+        Q.boton(T('p.mostrar_resp'), { id: 'btn-revelar', clase: 'dc-btn--primary dc-btn--lg', icono: 'eye', onclick: () => socket.emit('profesor:revelar') })));
   } else {
     const ultima = e.indice + 1 >= e.total;
     acciones.append(
-      el('span', { class: 'contador-resp' }, T('p.respondieron', { r: p.respondidos, n: e.numJugadores })),
-      el('span', { style: 'display:flex;gap:0.6rem' },
-        el('button', { class: 'btn peligro', id: 'btn-terminar', onclick: terminar }, T('p.terminar')),
-        el('button', { class: 'btn grande', id: 'btn-siguiente', onclick: () => socket.emit('profesor:siguiente') }, ultima ? T('p.ver_finales') : T('p.siguiente'))));
+      el('span', { class: 'contador-resp' }, Q.icono('users'), T('p.respondieron', { r: p.respondidos, n: e.numJugadores })),
+      el('span', { class: 'q-acciones' },
+        Q.boton(T('p.terminar'), { id: 'btn-terminar', clase: 'dc-btn--danger', onclick: terminar }),
+        Q.boton(ultima ? T('p.ver_finales') : T('p.siguiente'), { id: 'btn-siguiente', clase: 'dc-btn--primary dc-btn--lg', icono: ultima ? 'trophy' : 'arrow-right', onclick: () => socket.emit('profesor:siguiente') })));
   }
 
   principal.replaceChildren(
-    el('div', { class: 'estado-pregunta' }, el('span', null, T('a.pregunta_n_de', { i: e.indice + 1, n: e.total })), temporizadorEl),
+    el('div', { class: 'estado-pregunta' }, el('span', null, T('a.pregunta_n_de', { i: e.indice + 1, n: e.total })), revelada ? null : anilloActual.el),
     el('div', { class: 'pista-tiempo' }, barra),
     el('div', { class: 'enunciado' }, p.texto),
     opciones,
     acciones);
+  DC.meters(acciones);
 
   if (!revelada) {
     reloj = { fin: performance.now() + p.restanteMs, total: p.tiempo * 1000 };
@@ -643,23 +642,26 @@ function pintarPregunta(e) {
       const s = Math.ceil(resto / 1000);
       t.textContent = s;
       t.classList.toggle('poco', s <= 5);
+      anilloActual.poner(resto / reloj.total);
       b.style.transform = 'scaleX(' + (resto / reloj.total) + ')';
     };
     tic();
     temporizador = setInterval(tic, 100);
   } else {
     barra.style.transform = 'scaleX(0)';
+    anilloActual.poner(0);
   }
+
   pintarRanking(e.ranking, revelada ? 'p.ranking' : 'p.ranking_antes');
 }
 
-function terminar() {
-  if (!confirm(I18N.t('p.confirm_terminar'))) return;
+async function terminar() {
+  if (!(await Q.confirmar(I18N.t('p.confirm_terminar'), { peligro: true }))) return;
   socket.emit('profesor:terminar');
 }
 
 function pintarRanking(lista, claveTitulo, todos) {
-  $('lateral').hidden = false;
+  mostrarLateral(true);
   setT($('lat-titulo'), claveTitulo || 'p.ranking');
   const ol = $('ranking');
   ol.replaceChildren();
@@ -684,31 +686,30 @@ function pintarFinal(e) {
   }
 
   const r = e.ranking || [];
-  const medallas = ['🥇', '🥈', '🥉'];
   const podio = el('div', { class: 'podio' });
   for (const i of [1, 0, 2]) {
     if (!r[i]) continue;
     podio.append(el('div', { class: 'puesto p' + (i + 1) },
-      el('div', { class: 'medalla' }, medallas[i]),
+      el('div', { class: 'medalla' }, String(i + 1)),
       el('div', { class: 'nombre' }, r[i].nombre),
       el('div', { class: 'puntos' }, r[i].clase + ' · ', T('p.pts', { n: r[i].puntos })),
       el('div', { class: 'puntos' }, segundosFmt(r[i].tiempoMs))));
   }
 
   const nombreBase = hayResultados ? `${nombreSeguro(resumen.titulo)}-${resumen.fecha.slice(0, 10)}` : '';
-  principal.replaceChildren(el('div', { class: 'centrado' },
-    el('h1', { style: 'font-size:clamp(2rem,5vw,3.5rem);margin:0' }, T('p.fin')),
+  principal.replaceChildren(el('div', { class: 'q-bloque' },
+    el('div', { class: 'q-fila-titulo' }, el('h1', { class: 'dc-display' }, T('p.fin')), el('span', { class: 'q-medalla' }, Q.icono('trophy'))),
     podio,
     hayResultados ? [
-      el('div', { class: 'caja-resultados' },
-        el('p', { style: 'margin:0 0 0.6rem' }, el('strong', null, T('p.descarga_ahora')),
+      el('div', { class: 'dc-card caja-resultados' },
+        el('p', null, el('strong', null, T('p.descarga_ahora')),
           T(guardadoEnHistorial ? 'p.srv_no_guarda_ok' : 'p.srv_no_guarda_ko')),
-        el('div', { class: 'acciones-fin', style: 'justify-content:center' },
-          el('button', { class: 'btn grande', id: 'btn-csv-notas', onclick: () => descargar(`quest-notas-${nombreBase}.csv`, csvNotas([resumen]), 'text/csv;charset=utf-8') }, T('p.dl_notas')),
-          el('button', { class: 'btn secundario', id: 'btn-csv-detalle', onclick: () => descargar(`quest-detalle-${nombreBase}.csv`, csvDetalle([resumen]), 'text/csv;charset=utf-8') }, T('p.dl_detalle')))),
-    ] : el('p', { class: 'contador-resp' }, T('p.sin_resultados')),
-    el('div', { style: 'display:flex;gap:1rem;justify-content:center;margin-top:1.2rem' },
-      el('button', { class: 'btn grande', id: 'btn-nueva', onclick: cerrarYVolver }, T('p.nueva')))));
+        el('div', { class: 'acciones-fin' },
+          Q.boton(T('p.dl_notas'), { id: 'btn-csv-notas', clase: 'dc-btn--primary dc-btn--lg', icono: 'download', onclick: () => descargar(`quest-notas-${nombreBase}.csv`, csvNotas([resumen]), 'text/csv;charset=utf-8') }),
+          Q.boton(T('p.dl_detalle'), { id: 'btn-csv-detalle', icono: 'download', onclick: () => descargar(`quest-detalle-${nombreBase}.csv`, csvDetalle([resumen]), 'text/csv;charset=utf-8') }))),
+    ] : el('p', { class: 'contador-resp' }, Q.icono('alert'), T('p.sin_resultados')),
+    el('div', { class: 'q-botonera' },
+      Q.boton(T('p.nueva'), { id: 'btn-nueva', clase: 'dc-btn--primary dc-btn--lg', icono: 'play', onclick: cerrarYVolver }))));
   pintarRanking(r, 'p.clasif_final', true);
 }
 
